@@ -415,12 +415,8 @@
     .koala-nook { position: relative; display: inline-flex; max-width: 100%; }
     .koala-nook.field-nook { display: flex; width: 100%; }
     .koala-nook > .button, .koala-nook > input, .koala-nook > textarea { position: relative; z-index: 1; }
-    .koala-nook::before { content: ""; position: absolute; width: 43px; height: 43px; right: 12px; top: -21px; background: url("assets/koala-sprite-sheet.png") 100% 100% / 400% 200% no-repeat; image-rendering: pixelated; transform: translateY(11px); transition: transform .22s steps(3); pointer-events: none; }
-    .koala-nook:hover::before, .koala-nook:focus-within::before { transform: translateY(-10px) rotate(9deg); }
     .action-row { position: relative; }
     .add-item-form { position: relative; }
-    .add-item-form::before { content: ""; position: absolute; width: 43px; height: 43px; right: 102px; top: -30px; background: url("assets/koala-sprite-sheet.png") 100% 100% / 400% 200% no-repeat; image-rendering: pixelated; transform: translateY(12px); transition: transform .22s steps(3); pointer-events: none; }
-    .add-item-form:focus-within::before { transform: translateY(-8px); }
     @media (max-width: 700px) {
       body { background-attachment: scroll; background-position: 75% top; background-size: auto 100svh; }
       .shell { padding-top: 32px; }

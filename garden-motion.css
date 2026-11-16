@@ -16,8 +16,16 @@ body { position: relative; }
 .garden-fish:nth-child(3) { left: 5%; }
 .garden-fish:nth-child(4) { right: 8%; animation-delay: -3s; animation-duration: 9s; transform: scaleX(-1); }
 .roaming-koala { position: absolute; width: 54px; height: 54px; pointer-events: none; will-change: transform; }
-.roaming-koala .koala-sprite,
-.button-koala .koala-sprite { display: block; width: 100%; height: 100%; background: url("assets/koala-sprite-sheet.png") 100% 100% / 400% 200% no-repeat; image-rendering: pixelated; }
+.roaming-koala::after { content: ""; position: absolute; z-index: 2; display: block; background: var(--koala-rail-color, #355d49); pointer-events: none; }
+.roaming-koala.edge-top::after { left: 5px; right: 5px; top: var(--koala-contact-y); height: var(--koala-rail-width, 2px); }
+.roaming-koala.edge-left::after,
+.roaming-koala.edge-right::after { top: 5px; bottom: 5px; left: var(--koala-contact-x); width: var(--koala-rail-width, 2px); }
+.roaming-koala::before { content: ""; position: absolute; z-index: 3; width: 4px; height: 4px; opacity: 0; background: #8bab83; pointer-events: none; }
+.roaming-koala.edge-top::before { top: calc(var(--koala-contact-y) - 5px); left: 34%; box-shadow: 13px -2px #8bab83, -6px 2px #c5d9bf; }
+.roaming-koala.edge-left::before,
+.roaming-koala.edge-right::before { top: 30%; left: calc(var(--koala-contact-x) - 5px); box-shadow: 1px 15px #8bab83, -2px -7px #c5d9bf; }
+.roaming-koala.is-landing::before { animation: koala-contact .36s steps(3) both; }
+.roaming-koala .koala-sprite { display: block; width: 100%; height: 100%; background: url("assets/koala-sprite-sheet.png") 100% 100% / 400% 200% no-repeat; image-rendering: pixelated; }
 .roaming-koala.facing-left .koala-sprite { scale: -1 1; }
 .roaming-koala.is-walking .koala-sprite { animation: koala-walk .54s steps(1) infinite; }
 .roaming-koala.is-climbing .koala-sprite { animation: koala-climb .7s steps(1) infinite; }
@@ -25,20 +33,11 @@ body { position: relative; }
 .roaming-koala.is-idle .koala-sprite { animation: koala-breathe 2.8s ease-in-out infinite; }
 .roaming-koala.is-dangling .koala-sprite { animation: koala-dangle 2.1s ease-in-out infinite; transform-origin: 50% 15%; }
 .roaming-koala.is-clinging .koala-sprite { animation: koala-cling 2.2s ease-in-out infinite; }
+.roaming-koala.is-landing .koala-sprite { animation: koala-land .36s steps(1) 1; }
 .roaming-koala.is-waving .koala-sprite { animation: koala-wave 1.15s steps(1) infinite; }
 .roaming-koala.is-sitting .koala-sprite { animation: koala-sit 2.4s ease-in-out infinite; }
-.roaming-koala.is-peeking .koala-sprite { animation: koala-peek 1.7s ease-in-out infinite; }
-button.has-button-koala { position: relative; overflow: visible; }
-.button-koala { position: absolute; z-index: 4; top: -33px; right: 5px; width: 42px; height: 42px; pointer-events: none; }
-.button-koala.mode-walk { animation: button-koala-stroll 1.25s ease-in-out infinite alternate; }
-.button-koala.mode-walk .koala-sprite { animation: koala-walk .54s steps(1) infinite; }
-.button-koala.mode-jump { animation: button-koala-hop .88s ease-in-out 1; }
-.button-koala.mode-jump .koala-sprite { animation: koala-jump .88s steps(1) 1; }
-.button-koala.mode-dangle { top: -24px; right: 0; transform-origin: 50% 15%; animation: button-koala-dangle 1.8s ease-in-out infinite alternate; }
-.button-koala.mode-breathe .koala-sprite,
-.button-koala.mode-dangle .koala-sprite { animation: koala-breathe 2.8s ease-in-out infinite; }
-.button-koala.mode-wave .koala-sprite { animation: koala-wave 1.15s steps(1) infinite; }
-.button-koala.mode-peek .koala-sprite { animation: koala-peek 1.7s ease-in-out infinite; }
+.roaming-koala.is-peeking .koala-sprite { animation: koala-peek 1.7s ease-in-out infinite; clip-path: inset(0 0 27%); }
+.roaming-koala.is-hanging .koala-sprite { animation: koala-hang 2s ease-in-out infinite; transform-origin: 50% 15%; }
 @keyframes cloud-drift { from { translate: -12px 0; } to { translate: 26px 0; } }
 @keyframes fish-drift { from { translate: -9px 1px; } to { translate: 13px -2px; } }
 @keyframes koala-walk {
@@ -57,15 +56,14 @@ button.has-button-koala { position: relative; overflow: visible; }
 @keyframes koala-dangle { 0%,100% { background-position: 100% 100%; rotate: -8deg; } 50% { background-position: 100% 100%; rotate: 9deg; } }
 @keyframes koala-climb { 0%,49% { background-position: 33.333% 0%; rotate: -12deg; } 50%,100% { background-position: 100% 0%; rotate: 9deg; } }
 @keyframes koala-cling { 0%,100% { background-position: 100% 100%; rotate: -7deg; } 50% { background-position: 100% 100%; rotate: 5deg; } }
+@keyframes koala-land { 0%,35% { background-position: 0% 100%; translate: 0 3px; } 36%,100% { background-position: 100% 100%; translate: 0 0; } }
+@keyframes koala-contact { 0% { opacity: 0; scale: .6; } 35% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: 1.7; } }
 @keyframes koala-wave { 0%,49% { background-position: 33.333% 0%; rotate: -3deg; } 50%,100% { background-position: 100% 0%; rotate: 7deg; } }
 @keyframes koala-sit { 0%,100% { background-position: 0% 100%; translate: 0 2px; } 50% { background-position: 0% 100%; translate: 0 0; } }
 @keyframes koala-peek { 0%,100% { background-position: 0% 100%; translate: 0 9px; } 45%,65% { background-position: 100% 100%; translate: 0 -3px; } }
-@keyframes button-koala-stroll { from { translate: 4px 0; } to { translate: -30px 0; } }
-@keyframes button-koala-hop { 0%,100% { translate: 0 0; } 50% { translate: 0 -13px; } }
-@keyframes button-koala-dangle { from { rotate: -9deg; } to { rotate: 9deg; } }
+@keyframes koala-hang { 0%,100% { background-position: 33.333% 100%; translate: 0 8px; rotate: -6deg; } 50% { background-position: 33.333% 100%; translate: 0 13px; rotate: 5deg; } }
 @media (max-width: 700px) {
   .roaming-koala { width: 36px; height: 36px; }
-  .button-koala { width: 35px; height: 35px; top: -27px; }
   .garden-cloud { top: 72px; width: 60px; height: 20px; }
   .garden-cloud:nth-child(2) { top: 82px; width: 48px; }
   .garden-fish { width: 25px; height: 13px; }
@@ -73,6 +71,4 @@ button.has-button-koala { position: relative; overflow: visible; }
 @media (prefers-reduced-motion: reduce) {
   .garden-ambience,
   .koala-roam-layer { display: none; }
-  .button-koala,
-  .button-koala .koala-sprite { animation: none !important; }
 }

@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { edgePoint, walkPoint, chooseButtonMode } = require('./garden-motion.js');
+const { edgePoint, walkPoint } = require('./garden-motion.js');
 
 const viewport = { width: 1280, height: 800, size: 54 };
 const card = { left: 220, right: 1020, top: 180, bottom: 500, width: 800, height: 320 };
@@ -9,7 +9,14 @@ test('a koala stays at the same document point when the page scrolls', () => {
   const before = edgePoint(card, 54, viewport, { x: 0, y: 0 }, 'top', () => .4);
   const after = edgePoint({ ...card, top: 80, bottom: 400 }, 54, viewport, { x: 0, y: 100 }, 'top', () => .4);
   assert.deepEqual(after, before);
-  assert(before.y < card.top);
+  assert(Math.abs(before.y + 54 * .90 - card.top) <= 1);
+});
+
+test('an input koala grips the upper right corner away from typed text', () => {
+  const input = { left: 220, right: 620, top: 300, bottom: 348, width: 400, height: 48 };
+  const pet = edgePoint(input, 54, viewport, { x: 0, y: 0 }, 'top', () => 0, true);
+  assert(pet.x > input.right - 100);
+  assert(Math.abs(pet.y + 54 * .50 - input.top) <= 1);
 });
 
 test('koalas can perch and climb on a container side', () => {
@@ -31,11 +38,4 @@ test('koalas can walk in either direction along a panel rim', () => {
   assert(left.x < current.x);
   assert(right.x > current.x);
   assert.equal(left.y, right.y);
-});
-
-test('each button visit can select a different koala pose', () => {
-  const first = chooseButtonMode(null, () => 0);
-  const next = chooseButtonMode(first, () => 0);
-  assert.notEqual(first, next);
-  assert(new Set(['walk', 'jump', 'dangle', 'breathe', 'wave', 'peek']).has(next));
 });

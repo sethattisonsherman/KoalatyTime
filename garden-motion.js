@@ -13,9 +13,10 @@
         y: Math.round(top + 12 + random() * (bottom - top - size - 24))
       };
     }
+    const perchMinX = input ? Math.max(minX, maxX - size * .35) : minX;
     return {
-      x: Math.round(minX + random() * (maxX - minX)),
-      y: Math.round(top - size * (input ? .38 : .66))
+      x: Math.round(perchMinX + random() * (maxX - perchMinX)),
+      y: Math.round(top - size * (input ? .50 : .90))
     };
   }
 
@@ -29,12 +30,7 @@
     return { x: axis === 'x' ? Math.round(value) : start.x, y: axis === 'y' ? Math.round(value) : start.y };
   }
 
-  function chooseButtonMode(previous, random = Math.random) {
-    const modes = ['walk', 'jump', 'dangle', 'breathe', 'wave', 'peek'].filter(mode => mode !== previous);
-    return modes[Math.floor(random() * modes.length)];
-  }
-
-  if (typeof module !== 'undefined' && module.exports) module.exports = { edgePoint, walkPoint, chooseButtonMode };
+  if (typeof module !== 'undefined' && module.exports) module.exports = { edgePoint, walkPoint };
   if (typeof document === 'undefined') return;
 
   function startGardenMotion() {
@@ -60,7 +56,11 @@
       const { height, size } = viewport();
       return [...document.querySelectorAll(selector)].filter(host => {
         const rect = host.getBoundingClientRect();
-        return rect.width > size * 2 && rect.height > 20 && rect.top < height - 18 && rect.bottom > 80;
+        const style = getComputedStyle(host);
+        const hasSurface = isInputHost(host) || parseFloat(style.borderTopWidth) > 0 || parseFloat(style.borderLeftWidth) > 0
+          || parseFloat(style.borderRightWidth) > 0 || !['transparent', 'rgba(0, 0, 0, 0)'].includes(style.backgroundColor)
+          || style.backgroundImage !== 'none';
+        return hasSurface && rect.width > size * 2 && rect.height > 20 && rect.top < height - 18 && rect.bottom > 80;
       });
     }
 
@@ -88,6 +88,14 @@
       pet.fraction = clamp((point[axis] - start[axis]) / Math.max(1, end[axis] - start[axis]), 0, 1);
       pet.el.style.left = `${point.x}px`;
       pet.el.style.top = `${point.y}px`;
+      const rect = host.getBoundingClientRect(), offset = scroll();
+      const border = getComputedStyle(host);
+      const borderSide = edge === 'top' ? 'Top' : edge === 'left' ? 'Left' : 'Right';
+      const borderWidth = parseFloat(border[`border${borderSide}Width`]) || 0;
+      pet.el.style.setProperty('--koala-contact-x', `${Math.round((edge === 'left' ? rect.left : rect.right) + offset.x - point.x)}px`);
+      pet.el.style.setProperty('--koala-contact-y', `${Math.round(rect.top + offset.y - point.y)}px`);
+      pet.el.style.setProperty('--koala-rail-color', borderWidth ? border[`border${borderSide}Color`] : 'rgba(53, 110, 87, .42)');
+      pet.el.style.setProperty('--koala-rail-width', `${clamp(borderWidth, 2, 4)}px`);
       pet.el.hidden = false;
     }
 
@@ -97,9 +105,14 @@
 
     function idle(pet) {
       const pose = isInputHost(pet.host) ? 'is-dangling' : pet.edge !== 'top' ? 'is-clinging'
-        : ['is-idle', 'is-idle', 'is-waving', 'is-sitting', 'is-peeking'][Math.floor(random() * 5)];
+        : ['is-idle', 'is-idle', 'is-waving', 'is-sitting', 'is-peeking', 'is-hanging'][Math.floor(random() * 6)];
       pet.el.className = `roaming-koala edge-${pet.edge} ${pet.left ? 'facing-left ' : ''}${pose}`;
       schedule(pet, 700 + random() * 1700);
+    }
+
+    function land(pet) {
+      pet.el.className = `roaming-koala edge-${pet.edge} ${pet.left ? 'facing-left ' : ''}is-landing`;
+      pet.timer = window.setTimeout(() => idle(pet), 360);
     }
 
     function animateTo(pet, host, point, edge, jumping = false) {
@@ -116,7 +129,7 @@
         if (!layer) return;
         setAt(pet, host, point, edge);
         pet.motion.cancel(); pet.motion = null;
-        idle(pet);
+        land(pet);
       };
     }
 
@@ -211,42 +224,6 @@
       }
     }
 
-    function showButtonPet(button, fresh = true) {
-      if (button.disabled || button.matches('.plan-event, .item-help-button')) return;
-      const old = button.querySelector(':scope > .button-koala');
-      if (old && !fresh) return;
-      old?.remove();
-      const mode = chooseButtonMode(button.dataset.koalaLast, random);
-      button.dataset.koalaLast = mode;
-      const pet = document.createElement('span');
-      pet.className = `button-koala mode-${mode}`;
-      pet.setAttribute('aria-hidden', 'true');
-      pet.innerHTML = '<span class="koala-sprite"></span>';
-      button.classList.add('has-button-koala');
-      button.append(pet);
-    }
-
-    function removeButtonPet(button) {
-      button.querySelector(':scope > .button-koala')?.remove();
-      button.classList.remove('has-button-koala');
-    }
-
-    document.addEventListener('pointerover', event => {
-      const button = event.target.closest?.('button');
-      if (button && !button.contains(event.relatedTarget)) showButtonPet(button);
-    });
-    document.addEventListener('pointerout', event => {
-      const button = event.target.closest?.('button');
-      if (button && !button.contains(event.relatedTarget) && button !== document.activeElement) removeButtonPet(button);
-    });
-    document.addEventListener('focusin', event => {
-      const button = event.target.closest?.('button');
-      if (button) showButtonPet(button, false);
-    });
-    document.addEventListener('focusout', event => {
-      const button = event.target.closest?.('button');
-      if (button && !button.matches(':hover')) removeButtonPet(button);
-    });
     preference.addEventListener('change', () => preference.matches ? stop() : start());
     window.addEventListener('resize', requestReanchor);
     start();
