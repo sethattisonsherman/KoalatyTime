@@ -5,6 +5,14 @@
   pointer-events: none;
 }
 .garden-ambience { z-index: 0; }
+.garden-ambience::before {
+  content: "";
+  position: absolute;
+  inset: -3%;
+  background: url("assets/koala-grove.png") center top / cover no-repeat;
+  animation: garden-scene-drift 18s ease-in-out infinite alternate;
+  will-change: transform;
+}
 body { position: relative; }
 .koala-roam-layer { position: absolute; inset: 0 0 auto; height: 100%; z-index: 2; pointer-events: none; }
 .garden-cloud,
@@ -12,13 +20,13 @@ body { position: relative; }
 .garden-cloud { width: 96px; height: 32px; top: 88px; background-image: url("assets/gum-cloud.svg"); opacity: .55; animation: cloud-drift 38s ease-in-out infinite alternate; }
 .garden-cloud:nth-child(1) { left: 14%; }
 .garden-cloud:nth-child(2) { right: 18%; top: 107px; width: 70px; animation-duration: 52s; animation-delay: -17s; opacity: .4; }
-.garden-fish { width: 32px; height: 16px; bottom: 7%; background-image: url("assets/billabong-fish.svg"); opacity: .75; animation: fish-drift 7s ease-in-out infinite alternate; }
+.garden-fish { width: 32px; height: 16px; bottom: 11%; background-image: url("assets/billabong-fish.svg"); opacity: .75; animation: fish-drift 7s ease-in-out infinite alternate; }
 .garden-fish:nth-child(3) { left: 5%; }
-.garden-fish:nth-child(4) { right: 8%; animation-delay: -3s; animation-duration: 9s; transform: scaleX(-1); }
-.garden-water-glint { position: absolute; bottom: 8%; width: 112px; height: 4px; background: linear-gradient(90deg, transparent 0 8%, rgba(230,249,224,.58) 8% 34%, transparent 34% 50%, rgba(230,249,224,.4) 50% 74%, transparent 74%); image-rendering: pixelated; animation: garden-water-shimmer 5.8s steps(8) infinite alternate; }
-.garden-water-glint:nth-child(5) { left: 20%; bottom: 11%; }
-.garden-water-glint:nth-child(6) { left: 52%; bottom: 5%; width: 82px; animation-delay: -2s; animation-duration: 7s; }
-.garden-water-glint:nth-child(7) { right: 9%; bottom: 14%; width: 68px; animation-delay: -3.5s; animation-duration: 6.4s; }
+.garden-fish:nth-child(4) { right: 6%; animation-delay: -3s; animation-duration: 9s; scale: -1 1; }
+.garden-water-glint { position: absolute; bottom: 8%; width: 112px; height: 4px; background: linear-gradient(90deg, transparent 0 8%, rgba(230,249,224,.7) 8% 34%, transparent 34% 50%, rgba(230,249,224,.52) 50% 74%, transparent 74%); image-rendering: pixelated; animation: garden-water-shimmer 4.2s steps(8) infinite alternate; }
+.garden-water-glint:nth-child(5) { left: 3%; bottom: 16%; }
+.garden-water-glint:nth-child(6) { left: 9%; bottom: 5%; width: 82px; animation-delay: -2s; animation-duration: 5.4s; }
+.garden-water-glint:nth-child(7) { right: 4%; bottom: 15%; width: 92px; animation-delay: -3.5s; animation-duration: 4.8s; }
 .roaming-koala { position: absolute; width: 54px; height: 54px; pointer-events: none; will-change: transform; }
 .roaming-koala::after { content: ""; position: absolute; z-index: 2; display: block; background: var(--koala-rail-color, #355d49); pointer-events: none; }
 .roaming-koala.edge-top::after,
@@ -49,6 +57,7 @@ body { position: relative; }
 .roaming-koala.is-peeking .koala-sprite { animation: koala-peek-frames 1.7s steps(1) infinite, koala-peek-motion 1.7s ease-in-out infinite; }
 .roaming-koala.is-hanging .koala-sprite { animation: koala-hang 2s ease-in-out infinite; transform-origin: 50% 15%; }
 @keyframes cloud-drift { from { translate: -12px 0; } to { translate: 26px 0; } }
+@keyframes garden-scene-drift { from { transform: translate3d(-.7%, 0, 0) scale(1); } to { transform: translate3d(.7%, -.8%, 0) scale(1.015); } }
 @keyframes fish-drift { from { translate: -9px 1px; } to { translate: 13px -2px; } }
 @keyframes garden-water-shimmer { from { translate: -8px 0; opacity: .3; } to { translate: 12px -2px; opacity: .72; } }
 @keyframes koala-walk {
