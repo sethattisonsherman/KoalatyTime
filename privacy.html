@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#edf3e9">
+  <link rel="icon" type="image/png" href="assets/koala-calendar-logo.png">
+  <meta name="description" content="KoalatyTime Privacy Policy: how the weekly planning app handles your information and Google Calendar data.">
+  <title>Privacy Policy — KoalatyTime</title>
+  <style>
+    :root { color-scheme: light; --ink:#243b31; --muted:#536b5e; --green:#356e57; --line:#bccfbe; --paper:#edf3e9; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#d7e5ce url("assets/koala-grove.png") center top / cover fixed no-repeat; color:var(--ink); font:16px/1.65 "Trebuchet MS",Verdana,sans-serif; }
+    header { min-height:76px; padding:6px max(24px,calc((100% - 900px)/2)); display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:3px solid var(--ink); background:#f8fbf4; }
+    header a { color:var(--green); font-weight:700; text-decoration:none; }
+    header img { width:62px; height:62px; object-fit:contain; image-rendering:pixelated; }
+    main { position:relative; z-index:1; max-width:900px; margin:48px auto; padding:32px 38px 56px; border:2px solid var(--ink); background:rgba(251,253,248,.98); box-shadow:5px 5px 0 #c9d9c7; }
+    h1,h2 { font-family:"Courier New",monospace; letter-spacing:-.045em; }
+    h1 { margin:0 0 8px; font-size:clamp(2rem,5vw,3rem); line-height:1.15; }
+    h2 { margin:32px 0 8px; font-size:1.25rem; }
+    p,li { color:var(--muted); }
+    a { color:var(--green); }
+    .updated { margin-top:0; font-size:.92rem; }
+    .card { margin:24px 0; padding:18px 20px; border:1px solid var(--line); background:white; }
+    footer { border-top:2px solid var(--ink); padding:20px 24px; text-align:center; color:var(--muted); background:#f8fbf4; font-size:.9rem; }
+    :focus-visible { outline:3px solid #81b7a8; outline-offset:3px; }
+    @media(max-width:600px) { body { background-attachment:scroll; background-position:75% top; background-size:auto 100svh; } main { margin:26px 15px; padding:24px 20px 38px; } header { min-height:67px; padding:6px 15px; } header img { width:48px; height:48px; } }
+  </style>
+  <link rel="stylesheet" href="garden-motion.css">
+</head>
+<body>
+  <header><a href="./">← KoalatyTime</a><img src="assets/koala-calendar-logo.png" alt="Pixel koala hugging a calendar" width="62" height="62"></header>
+  <main>
+    <h1>KoalatyTime Privacy Policy</h1>
+    <p class="updated">Effective date: November 16, 2026</p>
+    <p>This policy describes how KoalatyTime, a weekly planning app, handles information when you use the website. You can use the planner without creating an account. Connecting Google Calendar is optional and happens only after you choose to connect it.</p>
+
+    <h2>Information you enter in the planner</h2>
+    <p>Your activities, schedule choices, weekly goal, and draft plan are held in the memory of your browser tab while you use the planner. KoalatyTime does not send this draft to its developer or save it in browser storage. Refreshing or closing the tab clears the draft.</p>
+
+    <h2>Google Calendar information</h2>
+    <p>If you choose to connect Google Calendar, KoalatyTime requests read-only access to events on calendars you own and uses it to read the upcoming week from your primary calendar. This lets the planner display existing plans and avoid conflicts. Event details are processed in your browser tab and are not sent to KoalatyTime’s servers. You can skip the connection and still use the planner.</p>
+    <p>KoalatyTime does not write to your calendar through the Google Calendar API. To save a plan, you can download one .ics file containing the new activities and weekly goal, or open a prefilled Google Calendar page for each event and save it there yourself. Existing calendar events and protected downtime are not included in the export. If you choose a Google link, its event title, time, and any description are sent to Google when you open the link. Downloaded or imported events are one-time copies and do not sync later changes from KoalatyTime. The app does not receive or store your Google password. The temporary read-only access token stays in tab memory and is cleared when the tab is refreshed or closed; you can also disconnect in the app or revoke access through your <a href="https://myaccount.google.com/permissions">Google Account permissions</a>.</p>
+
+    <h2>How information is shared</h2>
+    <p>When you connect Calendar, your browser communicates with Google’s sign-in and Calendar services to authenticate you and read events. Opening an individual Google Calendar link sends the information for that event to Google so you can choose whether to save it. KoalatyTime does not sell Google user data, use it for advertising, or share it with data brokers. KoalatyTime does not use Google user data to train generalized AI or machine-learning models. The website is hosted as a static site; its hosting provider may process basic request information under its own policies.</p>
+
+    <h2>Optional estimate feedback</h2>
+    <p>The static public website does not enable the optional shared-estimate contribution service. In the local, self-hosted version, if you explicitly choose to contribute a correction, the app sends only a predefined activity family, a Fun/To-do category, and rounded duration and travel-time buckets to that local server. It does not send activity titles, free text, calendar event details, names, account identifiers, or Google access tokens. The local server stores only aggregate counts. This optional local feature is not part of the hosted static website.</p>
+
+    <h2>Retention and deletion</h2>
+    <p>KoalatyTime does not retain calendar event details or draft plans on its own servers. Drafts disappear when you close or refresh the tab. Disconnecting or revoking Google access prevents future calendar reads but does not remove events you chose to save in your calendar. You can delete those events directly in your calendar app. If you have a question about this policy or a privacy request, contact the developer through the <a href="https://github.com/sethattisonsherman/KoalatyTime/issues">KoalatyTime project contact page</a>.</p>
+
+    <h2>Security</h2>
+    <p>Calendar read requests are made over HTTPS to Google. Access tokens are kept only in browser memory and are not written to local storage or sent to the KoalatyTime server. Use a trusted device and keep your browser up to date.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If KoalatyTime’s data practices change, this page will be updated before the revised practices are used. The effective date at the top of this page shows when it was last updated.</p>
+  </main>
+  <footer>KoalatyTime · Weekly planning with room to breathe</footer>
+  <script src="garden-motion.js"></script>
+</body>
+</html>

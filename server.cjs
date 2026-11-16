@@ -2,7 +2,7 @@ const http=require('node:http');
 const fs=require('node:fs');
 const path=require('node:path');
 const {createStore}=require('./estimate-store.cjs');
-const files={'/':'index.html','/index.html':'index.html','/planner.js':'planner.js','/config.js':'config.js','/google-calendar.js':'google-calendar.js'};
+const files={'/':'index.html','/index.html':'index.html','/privacy.html':'privacy.html','/planner.js':'planner.js','/config.js':'config.js','/google-calendar.js':'google-calendar.js','/garden-motion.css':'garden-motion.css','/garden-motion.js':'garden-motion.js','/assets/koala-calendar-logo.png':'assets/koala-calendar-logo.png','/assets/koala-grove.png':'assets/koala-grove.png','/assets/koala-sprite-sheet.png':'assets/koala-sprite-sheet.png','/assets/gum-cloud.svg':'assets/gum-cloud.svg','/assets/billabong-fish.svg':'assets/billabong-fish.svg'};
 function createServer(store){
   let windowStart=0,contributions=0;
   return http.createServer(async(req,res)=>{
@@ -28,7 +28,7 @@ function createServer(store){
     }
     if(!['GET','HEAD'].includes(req.method)){reply(405,{error:'Method not allowed'});return;}
     const file=files[pathname];if(!file){reply(404,{error:'Not found'});return;}
-    res.setHeader('Content-Type',file.endsWith('.html')?'text/html; charset=utf-8':'text/javascript; charset=utf-8');
+    res.setHeader('Content-Type',file.endsWith('.html')?'text/html; charset=utf-8':file.endsWith('.png')?'image/png':file.endsWith('.svg')?'image/svg+xml; charset=utf-8':file.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8');
     res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer-when-downgrade');res.setHeader('X-Content-Type-Options','nosniff');
     if(req.method==='HEAD'){res.end();return;}
     const stream=fs.createReadStream(path.join(__dirname,file));stream.on('error',()=>{res.statusCode=500;res.end();});stream.pipe(res);

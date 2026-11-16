@@ -1,0 +1,66 @@
+.garden-ambience,
+.koala-roam-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.garden-ambience { z-index: 0; }
+.koala-roam-layer { z-index: 2; }
+.garden-cloud,
+.garden-fish { position: absolute; display: block; background-repeat: no-repeat; background-size: contain; image-rendering: pixelated; }
+.garden-cloud { width: 96px; height: 32px; top: 88px; background-image: url("assets/gum-cloud.svg"); opacity: .55; animation: cloud-drift 38s ease-in-out infinite alternate; }
+.garden-cloud:nth-child(1) { left: 14%; }
+.garden-cloud:nth-child(2) { right: 18%; top: 107px; width: 70px; animation-duration: 52s; animation-delay: -17s; opacity: .4; }
+.garden-fish { width: 32px; height: 16px; bottom: 7%; background-image: url("assets/billabong-fish.svg"); opacity: .75; animation: fish-drift 7s ease-in-out infinite alternate; }
+.garden-fish:nth-child(3) { left: 5%; }
+.garden-fish:nth-child(4) { right: 8%; animation-delay: -3s; animation-duration: 9s; transform: scaleX(-1); }
+.roaming-koala { position: absolute; width: 54px; height: 54px; pointer-events: none; will-change: transform; }
+.roaming-koala .koala-sprite,
+.button-koala .koala-sprite { display: block; width: 100%; height: 100%; background: url("assets/koala-sprite-sheet.png") 100% 100% / 400% 200% no-repeat; image-rendering: pixelated; }
+.roaming-koala.facing-left .koala-sprite { scale: -1 1; }
+.roaming-koala.is-walking .koala-sprite { animation: koala-walk .54s steps(1) infinite; }
+.roaming-koala.is-jumping .koala-sprite { animation: koala-jump .88s steps(1) 1; }
+.roaming-koala.is-idle .koala-sprite { animation: koala-breathe 2.8s ease-in-out infinite; }
+.roaming-koala.is-dangling .koala-sprite { animation: koala-dangle 2.1s ease-in-out infinite; transform-origin: 50% 15%; }
+button.has-button-koala { position: relative; overflow: visible; }
+.button-koala { position: absolute; z-index: 4; top: -33px; right: 5px; width: 42px; height: 42px; pointer-events: none; }
+.button-koala.mode-walk { animation: button-koala-stroll 1.25s ease-in-out infinite alternate; }
+.button-koala.mode-walk .koala-sprite { animation: koala-walk .54s steps(1) infinite; }
+.button-koala.mode-jump { animation: button-koala-hop .88s ease-in-out 1; }
+.button-koala.mode-jump .koala-sprite { animation: koala-jump .88s steps(1) 1; }
+.button-koala.mode-dangle { top: -24px; right: 0; transform-origin: 50% 15%; animation: button-koala-dangle 1.8s ease-in-out infinite alternate; }
+.button-koala.mode-breathe .koala-sprite,
+.button-koala.mode-dangle .koala-sprite { animation: koala-breathe 2.8s ease-in-out infinite; }
+@keyframes cloud-drift { from { translate: -12px 0; } to { translate: 26px 0; } }
+@keyframes fish-drift { from { translate: -9px 1px; } to { translate: 13px -2px; } }
+@keyframes koala-walk {
+  0%,24% { background-position: 0% 0%; }
+  25%,49% { background-position: 33.333% 0%; }
+  50%,74% { background-position: 66.667% 0%; }
+  75%,100% { background-position: 100% 0%; }
+}
+@keyframes koala-jump {
+  0%,18% { background-position: 0% 100%; translate: 0 0; }
+  19%,62% { background-position: 33.333% 100%; translate: 0 -13px; }
+  63%,85% { background-position: 66.667% 100%; translate: 0 -3px; }
+  86%,100% { background-position: 100% 100%; translate: 0 0; }
+}
+@keyframes koala-breathe { 0%,100% { background-position: 100% 100%; translate: 0 0; } 50% { background-position: 100% 100%; translate: 0 -2px; } }
+@keyframes koala-dangle { 0%,100% { background-position: 100% 100%; rotate: -8deg; } 50% { background-position: 100% 100%; rotate: 9deg; } }
+@keyframes button-koala-stroll { from { translate: 4px 0; } to { translate: -30px 0; } }
+@keyframes button-koala-hop { 0%,100% { translate: 0 0; } 50% { translate: 0 -13px; } }
+@keyframes button-koala-dangle { from { rotate: -9deg; } to { rotate: 9deg; } }
+@media (max-width: 700px) {
+  .roaming-koala { width: 36px; height: 36px; }
+  .button-koala { width: 35px; height: 35px; top: -27px; }
+  .garden-cloud { top: 72px; width: 60px; height: 20px; }
+  .garden-cloud:nth-child(2) { top: 82px; width: 48px; }
+  .garden-fish { width: 25px; height: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .garden-ambience,
+  .koala-roam-layer { display: none; }
+  .button-koala,
+  .button-koala .koala-sprite { animation: none !important; }
+}

@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f4f7f5">
-  <title>Sunday — Make room for your week</title>
+  <meta name="theme-color" content="#edf3e9">
+  <link rel="icon" type="image/png" href="assets/koala-calendar-logo.png">
+  <title>KoalatyTime — Make room for your week</title>
   <style>
     :root {
       color-scheme: light;
@@ -209,12 +210,18 @@
     .repeat-option { margin-top: 8px; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
     .repeat-option input { accent-color: var(--green); }
     .quiet-times { margin-top: 13px; border-top: 1px solid #dfe8e3; padding-top: 11px; }
-    .quiet-times summary { color: var(--green-dark); font-size: 13px; font-weight: 650; cursor: pointer; }
+    .quiet-times h3 { margin: 0; color: var(--green-dark); font-size: 14px; }
     .quiet-grid { display: grid; gap: 6px; margin-top: 11px; }
-    .quiet-row { display: grid; grid-template-columns: 65px 1fr 1fr; align-items: center; gap: 8px; font-size: 12px; }
-    .quiet-row input { min-height: 34px; padding: 0 6px; font-size: 12px; }
-    .quiet-row span { color: var(--muted); }
-    .quiet-labels { display: grid; grid-template-columns: 65px 1fr 1fr; gap: 8px; color: #84918b; font-size: 10px; }
+    .quiet-row { display: grid; grid-template-columns: 80px minmax(0,1fr); align-items: start; gap: 8px; font-size: 12px; }
+    .quiet-row > strong { padding-top: 12px; }
+    .quiet-row input { width: 100%; min-height: 40px; padding: 8px 10px; font-size: 13px; }
+    .quiet-feedback { display: block; margin: 5px 0 8px; color: var(--muted); line-height: 1.5; }
+    .quiet-feedback.error { color: #a2382d; }
+    .quiet-row.weekly { border-top: 1px solid #dfe8e3; padding-top: 12px; margin-top: 6px; }
+    .item-inline-form { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+    .item-inline-form label { flex-basis: 100%; font-size: 12px; color: var(--muted); }
+    .item-inline-form input { width: 100%; min-width: 0; }
+    .item-inline-form .helper { flex-basis: 100%; margin: 0; }
     .add-item-form { margin-top: 10px; padding-top: 12px; display: flex; gap: 9px; border-top: 1px solid #edf1ef; }
     .add-item-form > input[type="text"] { flex: 1; min-width: 0; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
@@ -258,6 +265,13 @@
     .goal-summary { margin-top: 17px; padding: 14px 16px; border-left: 3px solid var(--lime); border-radius: 4px 11px 11px 4px; background: #f6f9ee; }
     .goal-summary small { display: block; color: var(--muted); }
     .goal-summary strong { font-size: 15px; }
+    .calendar-save-panel { margin-top: 24px; padding: 20px; border: 1px solid var(--line); border-radius: 15px; background: #f8fbf9; }
+    .calendar-save-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+    .calendar-event-links { display: grid; gap: 8px; margin-top: 12px; }
+    .calendar-event-link { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+    .calendar-event-link span { font-size: 13px; font-weight: 600; }
+    .calendar-link-details { margin-top: 18px; }
+    .calendar-link-details summary { color: var(--green-dark); font-weight: 650; cursor: pointer; }
     .calendar-toggle { width: fit-content; padding: 4px; display: flex; gap: 3px; margin: 20px 0 12px; border-radius: 11px; background: #eff4f1; }
     .calendar-toggle button { min-height: 36px; padding: 0 15px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-weight: 600; }
     .calendar-toggle button.active { background: white; color: var(--ink); box-shadow: 0 1px 5px rgba(30,52,48,.08); }
@@ -313,8 +327,7 @@
       .add-item-form { flex-wrap: wrap; }
       .add-item-form > input[type="text"] { flex: 1 1 120px; }
       .add-item-form .repeat-option { flex-basis: 100%; margin-top: 0; }
-      .quiet-row { grid-template-columns: 46px minmax(0,1fr) minmax(0,1fr); gap: 5px; }
-      .quiet-labels { grid-template-columns: 46px minmax(0,1fr) minmax(0,1fr); gap: 5px; }
+      .quiet-row { grid-template-columns: 62px minmax(0,1fr); gap: 7px; }
       .duration { grid-column: 1 / -1; text-align: left; margin-top: -5px; }
       .goal-fields { grid-template-columns: 1fr 1fr; }
       .goal-fields .field:last-child { grid-column: 1 / -1; }
@@ -324,17 +337,119 @@
       .action-row .button { flex: 1; }
       .week-stamp { align-items: flex-start; flex-direction: column; gap: 4px; }
     }
+    /* Quiet pixel garden: crisp edges carry the theme; the calendar carries the work. */
+    :root {
+      --paper: #edf3e9; --surface: #fbfdf8; --ink: #243b31; --muted: #536b5e;
+      --line: #bccfbe; --green: #356e57; --green-dark: #285541;
+      --mint: #dcebd8; --lime: #c6dfa2; --blue: #e0e1f3;
+      --amber: #f5ebce; --rose: #f3e1dd;
+      --shadow: 5px 5px 0 #c9d9c7;
+    }
+    body { font-family: "Trebuchet MS", Verdana, sans-serif; background: #d7e5ce url("assets/koala-grove.png") center top / cover fixed no-repeat; }
+    h1, h2, h3, .brand { font-family: "Courier New", monospace; letter-spacing: -.055em; }
+    h1 { font-size: clamp(38px, 5vw, 62px); line-height: 1.08; }
+    h2 { line-height: 1.14; }
+    .topbar { position: relative; z-index: 3; height: 76px; background: #f8fbf4; border-bottom: 3px solid var(--ink); }
+    .brand { display: grid; gap: 0; font-size: 20px; line-height: 1; }
+    .brand small { margin-top: 5px; color: var(--muted); font: 11px/1.2 "Trebuchet MS", sans-serif; letter-spacing: 0; }
+    .topbar-end { display: flex; align-items: center; gap: 24px; }
+    .privacy-link, a { color: var(--green-dark); }
+    .privacy-link { font-size: 13px; }
+    .koala-logo { width: 62px; height: 62px; object-fit: contain; image-rendering: pixelated; }
+    .shell { position: relative; z-index: 1; max-width: 1120px; padding-top: 48px; }
+    .welcome { max-width: 810px; margin-top: 32px; padding: 32px 34px 38px; background: rgba(251,253,248,.98); border: 3px solid var(--ink); box-shadow: 8px 8px 0 #c5d9bf; }
+    .welcome-mark { border: 2px solid var(--ink); border-radius: 0; box-shadow: 5px 5px 0 var(--lime); background: #e8f1d4; }
+    .week-stamp, .main-panel, .source-scan, .schedule-prefs, .idea-box, .calendar-save-panel { border-radius: 0; }
+    .main-panel { border: 2px solid var(--ink); box-shadow: var(--shadow); }
+    .week-stamp { border-left: 4px solid var(--green); background: #e4eedc; }
+    .steps-wrap { margin-bottom: 30px; }
+    .steps { max-width: 840px; padding: 12px 16px; border: 2px solid var(--ink); background: rgba(251,253,248,.96); box-shadow: 4px 4px 0 #b4c9aa; }
+    .side-note { padding: 16px; border: 2px solid var(--ink); background: rgba(251,253,248,.97); box-shadow: 4px 4px 0 #b4c9aa; }
+    .step .dot { border-radius: 0; border: 2px solid var(--line); }
+    .step.active .dot { border-color: var(--ink); }
+    .step-line { height: 2px; }
+    .button, .choice, .day-pill, .source-option, .plan-day-details, .plan-agenda-row, .activity-row, .calendar-event-link, .calendar-save-panel, .goal-summary, .toast, dialog, input, select, textarea { border-radius: 2px !important; }
+    .button { position: relative; border: 2px solid var(--ink); box-shadow: 3px 3px 0 #a8c5a6; transition: transform .12s ease, box-shadow .12s ease, background .12s ease; }
+    .button:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #a8c5a6; }
+    .button:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 #a8c5a6; }
+    .button.secondary { border-color: var(--line); box-shadow: 2px 2px 0 #d5e3cf; }
+    .button.quiet { border-color: transparent; box-shadow: none; }
+    .day-pill.checked { border-color: var(--green-dark); box-shadow: inset 0 -3px 0 #b3d4aa; }
+    .choice-icon, .check, .legend-dot { border-radius: 0; }
+    .side-note .tiny-title, .panel-kicker { text-transform: none; letter-spacing: 0; }
+    .source-scan, .schedule-prefs { border: 1px solid var(--line); background: #f0f6ec; }
+    .calendar-workspace { display: block; }
+    .calendar-workspace .side-note { display: none; }
+    .calendar-workspace .main-panel { max-width: none; }
+    .calendar-view-toggle { display: inline-flex; gap: 0; margin: 16px 0 8px; border: 2px solid var(--ink); background: #eef4e8; }
+    .calendar-view-toggle button { min-height: 39px; padding: 0 16px; border: 0; background: transparent; color: var(--ink); font-weight: 700; }
+    .calendar-view-toggle button + button { border-left: 2px solid var(--ink); }
+    .calendar-view-toggle button.active { background: var(--green); color: white; }
+    .calendar-view-panel[hidden] { display: none !important; }
+    .plan-week-scroll { overflow-x: auto; overscroll-behavior-inline: contain; padding: 0 0 12px; margin-top: 12px; scrollbar-color: var(--green) #e3eddc; }
+    .plan-week { --calendar-height: 928px; min-width: 875px; border: 2px solid var(--ink); background: #fafdF8; }
+    .plan-week-head, .plan-week-body { grid-template-columns: 55px repeat(7,minmax(0,1fr)); }
+    .plan-week-head { position: sticky; top: 0; z-index: 2; background: #e4eedc; border-bottom: 2px solid var(--ink); }
+    .plan-week-head .plan-day-head { min-height: 55px; padding: 7px 5px; border-left: 1px solid var(--line); border-bottom: 0; }
+    .plan-week-head .plan-day-head strong { font-size: 14px; }
+    .plan-week-head .plan-day-head span { font-size: 11px; }
+    .plan-time-label { padding-right: 8px; font-size: 10px; color: var(--muted); }
+    .plan-time-axis { grid-template-rows: repeat(var(--calendar-hours), minmax(0,1fr)); }
+    .plan-day { border-left: 1px solid var(--line); background-color: #fafdf8; background-image: linear-gradient(to bottom, #d6e3d3 1px, transparent 1px); background-size: 100% 44px; }
+    .review-timeline .plan-week-head, .review-timeline .plan-week-body { gap: 0; }
+    .review-timeline .plan-day-head { border-radius: 0; background: transparent; }
+    .review-timeline .plan-day { border-radius: 0; background-color: #fafdF8; }
+    .plan-event, .review-timeline .plan-event { padding: 3px 4px; border: 1px solid #608075; border-left: 4px solid #608075; border-radius: 0; background: #e4eee9; font-size: 10px; line-height: 1.2; font-weight: 700; overflow: hidden; }
+    .plan-event .event-time { display: block; font-size: 9px; color: var(--muted); font-weight: 400; }
+    .plan-event:hover, .plan-event:focus-visible { z-index: 3; filter: brightness(.94); }
+    .plan-event.new { background: var(--mint); border-left-color: var(--green); }
+    .plan-event.fun { background: var(--blue); border-left-color: #8c87bd; }
+    .plan-event.downtime { background: var(--amber); border-left-color: #aa8d56; }
+    .plan-event.goal { background: #d9e8bb; border-left-color: #759143; }
+    .calendar-legend { gap: 8px 18px; font-size: 13px; }
+    .plan-agenda { margin-top: 12px; }
+    .plan-day-details { overflow: hidden; background: #fff; }
+    .plan-day-details summary { background: #edf4e9; }
+    .plan-day-details[open] summary { border-bottom: 2px solid var(--line); }
+    .plan-agenda-row { border-left: 4px solid var(--green); }
+    .koala-nook { position: relative; display: inline-flex; max-width: 100%; }
+    .koala-nook.field-nook { display: flex; width: 100%; }
+    .koala-nook > .button, .koala-nook > input, .koala-nook > textarea { position: relative; z-index: 1; }
+    .koala-nook::before { content: ""; position: absolute; width: 43px; height: 43px; right: 12px; top: -21px; background: url("assets/koala-sprite-sheet.png") 100% 100% / 400% 200% no-repeat; image-rendering: pixelated; transform: translateY(11px); transition: transform .22s steps(3); pointer-events: none; }
+    .koala-nook:hover::before, .koala-nook:focus-within::before { transform: translateY(-10px) rotate(9deg); }
+    .action-row { position: relative; }
+    .add-item-form { position: relative; }
+    .add-item-form::before { content: ""; position: absolute; width: 43px; height: 43px; right: 102px; top: -30px; background: url("assets/koala-sprite-sheet.png") 100% 100% / 400% 200% no-repeat; image-rendering: pixelated; transform: translateY(12px); transition: transform .22s steps(3); pointer-events: none; }
+    .add-item-form:focus-within::before { transform: translateY(-8px); }
+    @media (max-width: 700px) {
+      body { background-attachment: scroll; background-position: 75% top; background-size: auto 100svh; }
+      .shell { padding-top: 32px; }
+      .topbar { height: 67px; padding: 0 15px; }
+      .brand { font-size: 17px; }
+      .brand small { font-size: 10px; }
+      .topbar-end { gap: 9px; }
+      .privacy-link { font-size: 11px; }
+      .koala-logo { width: 48px; height: 48px; }
+      .welcome { padding: 23px 20px 30px; margin-top: 18px; }
+      .main-panel { padding: 21px 15px; }
+      .plan-week { min-width: 800px; }
+      .calendar-view-toggle { display: flex; width: 100%; }
+      .calendar-view-toggle button { flex: 1; }
+      .plan-day-details summary span { float: none; display: block; margin-top: 2px; }
+    }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
     }
   </style>
+  <link rel="stylesheet" href="garden-motion.css">
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">S</span><span>Sunday</span></div>
-    <span class="demo-tag">Your week, with room to breathe</span>
+    <div class="brand"><span>KoalatyTime</span><small>Make room for your week</small></div>
+    <div class="topbar-end"><a class="privacy-link" href="privacy.html">Privacy policy</a><img class="koala-logo" src="assets/koala-calendar-logo.png" alt="Pixel koala hugging a calendar" width="54" height="54"></div>
   </header>
   <main class="shell" id="app" aria-live="polite"></main>
+  <noscript><p>KoalatyTime is a weekly planning app. You can build a plan without signing in; connecting Google Calendar is optional. JavaScript must be enabled to use the planner. Read our <a href="privacy.html">Privacy Policy</a>.</p></noscript>
   <div class="toast" id="toast" role="status"></div>
   <script src="planner.js"></script>
   <script src="config.js"></script>
@@ -357,12 +472,15 @@
       openPlanDay: null,
       googleReady: false, googleBusy: false, scanBusy: false, googleMessage: "", googleError: false,
       planDays: [0,1,2,3,4,5,6],
-      quietTimes: weekDays.map(()=>({start:"",end:""})),
+      quietTimes: weekDays.map(()=>[]),
+      quietDrafts: Array(8).fill(""),
+      quietErrors: Array(8).fill(""),
       sharedLearningAvailable: false,
       downtimeMinutes: 30,
       downtime: [],
       items: [],
       editingIndex: null,
+      editingDraft: "",
       itemDraft: "",
       goalMode: "tasks",
       direction: "at least",
@@ -372,11 +490,9 @@
       selectedTasks: [],
       selectedTasksInitialized: false,
       reviewMode: "after",
+      calendarView: typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches ? 'agenda' : 'week',
       openReviewDay: null,
       reward: "",
-      published: false,
-      publishBusy: false,
-      publishError: "",
       ideaHistory: []
     };
     state.unplaced = [];
@@ -395,7 +511,7 @@
         return `${step}${i < steps.length - 1 ? '<span class="step-line"></span>' : ""}`;
       }).join("")}</div></div>`;
       const side = `<aside class="side-note"><div class="tiny-title">Your week</div><p>A little structure for the things you need to do and the things you want to do.</p><div class="mini-week">${weekDays.map((d,i)=>`<div class="mini-day">${d}<b>${dates[i].split(" ")[1]}</b></div>`).join("")}</div></aside>`;
-      app.innerHTML = `${progress}<div class="workspace">${side}<section class="main-panel">${content}</section></div>`;
+      app.innerHTML = `${progress}<div class="workspace ${page===1||page===4?'calendar-workspace':''}">${side}<section class="main-panel">${content}</section></div>`;
       app.querySelectorAll("[data-action]").forEach(el => el.addEventListener("click", actions[el.dataset.action]));
       bindInputs();
     }
@@ -408,6 +524,9 @@
     function navButtons(back, next, nextText = "Continue") {
       return `<div class="action-row">${back ? `<button class="button secondary" data-action="back">Back</button>` : ""}<button class="button" data-action="${next}">${nextText}</button></div>`;
     }
+    function calendarViewToggle() {
+      return `<div class="calendar-view-toggle" role="group" aria-label="Calendar view"><button type="button" class="${state.calendarView==='week'?'active':''}" data-action="calendarView" data-id="week" aria-pressed="${state.calendarView==='week'}">Week grid</button><button type="button" class="${state.calendarView==='agenda'?'active':''}" data-action="calendarView" data-id="agenda" aria-pressed="${state.calendarView==='agenda'}">Day list</button></div>`;
+    }
     function render() {
       if (state.page < 0) return renderWelcome();
       if (state.page === 0) return renderCalendar();
@@ -415,28 +534,30 @@
       if (state.page === 2) return renderList();
       if (state.page === 3) return renderGoal();
       if (state.page === 4) return renderReview();
-      return renderSuccess();
+      return renderWelcome();
     }
     function renderWelcome() {
       document.getElementById("app").innerHTML = `<section class="welcome">
         <div class="welcome-mark" aria-hidden="true">☀</div>
-        <div class="panel-kicker">A little Sunday reset</div>
+        <div class="panel-kicker">Your weekly planning companion</div>
         <h1>Make room for your week.</h1>
         <p class="lede">Bring your plans, to-dos, and things you’re looking forward to into one week that feels like yours.</p>
+        <p class="helper">KoalatyTime is free to explore without an account. Google Calendar is optional and connects only when you choose.</p>
         <div class="week-stamp"><div><small>Planning for</small><strong>${weekLabel}</strong></div><small>About 5 minutes</small></div>
         <button class="button" data-action="start">Plan this week</button>
-        <p class="bottom-note">You’ll review everything before it goes on your calendar.</p>
+        <p class="bottom-note">You’ll review everything before it goes on your calendar. <a href="privacy.html">Read our Privacy Policy</a>.</p>
       </section>`;
       document.querySelector('[data-action="start"]').addEventListener("click", actions.start);
     }
     function renderCalendar() {
       shell(`<div class="panel-kicker">First, your calendar</div><h2>Where should your plans live?</h2>
-        <p class="panel-intro">Connect Google Calendar to read your existing plans. You can also skip this step.</p>
+        <p class="panel-intro">You can connect Google Calendar to read your existing plans, or skip this step. No account connection is needed to try KoalatyTime or save your finished plan.</p>
+        <p class="helper"><strong>For a quick booth demo, skip calendar connection.</strong> You can build a plan and save it without signing in.</p>
         <div class="choice-grid">
           ${calendarChoice("google", "G", "Google Calendar", GoogleCalendar.connected() ? "Connected · primary calendar" : "Read existing plans from your primary calendar")}
         </div>
         ${googleConnectionMarkup()}
-        <p class="helper">Sunday reads existing plans and adds approved events to Google Calendar. Apple Calendar is coming later.</p>
+        <p class="helper">Connecting is optional and only reads your primary calendar. You can save your new plan later with a calendar file or individual Google Calendar links.</p>
         ${navButtons(null, "toPlans", state.calendars.length ? "Continue" : "Skip for now")}`, 0);
     }
     function calendarChoice(id, mark, name, desc) {
@@ -496,10 +617,10 @@
           <div class="day-checks">${weekDays.map((d,i)=>`<button class="day-pill ${state.scans.includes(i)?'checked':''}" data-action="day" data-id="${i}" aria-pressed="${state.scans.includes(i)}" ${state.scanBusy?'disabled':''}>${d} ${dates[i].split(' ')[1]}</button>`).join('')}</div>
           <div class="scan-action"><button class="button small" data-action="scan" ${state.scanBusy?'disabled':''}>${state.scanBusy?'Checking…':state.scanned?'Check again':'Check selected days'}</button></div>
         </div>
-        <div class="plan-section"><h3>Review Plans</h3><p class="helper">${weekLabel} · ${escapeHtml(Intl.DateTimeFormat().resolvedOptions().timeZone)}</p>
-          ${planCalendarMarkup()}
-          <p class="helper">Select a calendar block or expand a day below to review its plans.</p>
-          ${planAgendaMarkup()}
+        <div class="plan-section"><h3>Review plans</h3><p class="helper">${weekLabel} · ${escapeHtml(Intl.DateTimeFormat().resolvedOptions().timeZone)}</p>
+          ${calendarViewToggle()}
+          <div class="calendar-view-panel" ${state.calendarView==='week'?'':'hidden'}>${planCalendarMarkup()}<p class="helper">Select a block to open its details. Scroll sideways to see every day.</p></div>
+          <div class="calendar-view-panel" ${state.calendarView==='agenda'?'':'hidden'}>${planAgendaMarkup()}</div>
         </div>${navButtons('back','toList')}`,1);
       document.querySelectorAll('.plan-day-details').forEach(group=>group.addEventListener('toggle',()=>{
         const day=+group.dataset.day;
@@ -518,25 +639,63 @@
       return weekCalendarMarkup(state.imported.map((event,index)=>({...event,id:String(index)})));
     }
     function weekCalendarMarkup(events,{separated=false,action='focusPlan'}={}) {
-      const header=`<div class="plan-week-head"><div></div>${weekDays.map((day,i)=>`<div class="plan-day-head"><strong>${day}</strong><span>${dates[i]}</span></div>`).join('')}</div>`;
-      const axis=`<div class="plan-time-axis">${Array.from({length:24},(_,hour)=>`<div class="plan-time-label">${hour%2===0?formatAxisHour(hour):''}</div>`).join('')}</div>`;
       const minutes=p=>+p.time.slice(0,2)*60 + +p.time.slice(3,5);
+      const startHour=Math.max(0,Math.min(6,...events.map(p=>Math.floor(minutes(p)/60))));
+      const endHour=Math.min(24,Math.max(22,...events.map(p=>Math.ceil((minutes(p)+(p.durationMinutes||60))/60))));
+      const hours=endHour-startHour;
+      const header=`<div class="plan-week-head"><div></div>${weekDays.map((day,i)=>`<div class="plan-day-head"><strong>${day}</strong><span>${dates[i]}</span></div>`).join('')}</div>`;
+      const axis=`<div class="plan-time-axis">${Array.from({length:hours},(_,offset)=>`<div class="plan-time-label">${offset%2===0?formatAxisHour(startHour+offset):''}</div>`).join('')}</div>`;
       const days=weekDays.map((day,dayIndex)=>{
         const entries=events.filter(p=>p.day===dayIndex);
         const sorted=[...entries].sort((a,b)=>minutes(a)-minutes(b)),ends=[],lanes=new Map();
         for(const p of sorted){let lane=ends.findIndex(end=>end<=minutes(p));if(lane<0)lane=ends.length;ends[lane]=minutes(p)+(p.durationMinutes||60);lanes.set(p,lane);}
         return `<div class="plan-day" aria-label="${day} ${dates[dayIndex]}">${entries.map(p=>{
-          const top=minutes(p)/1440*100,height=Math.min(100-top,(p.durationMinutes||60)/1440*100),width=100/Math.max(1,ends.length);
+          const top=(minutes(p)-startHour*60)/(hours*60)*100,height=Math.min(100-top,(p.durationMinutes||60)/(hours*60)*100),width=100/Math.max(1,ends.length);
           const label=`${p.title}, ${day}, ${p.allDay?'all day':formatClock(p.time)}, ${p.durationMinutes||60} minutes${p.tentative?', tentative':''}${p.keep===false?', excluded':''}. Show details.`;
-          return `<button class="plan-event ${p.kind||''} ${p.type==='Fun'?'fun':''} ${p.tentative?'tentative':''} ${p.keep===false?'excluded':''}" style="top:${top}%;height:${height}%;left:calc(${lanes.get(p)*width}% + 1px);width:calc(${width}% - 2px)" data-action="${action}" data-id="${p.id}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${escapeHtml(p.title)}</button>`;
+          return `<button class="plan-event ${p.kind||''} ${p.type==='Fun'?'fun':''} ${p.tentative?'tentative':''} ${p.keep===false?'excluded':''}" style="top:${top}%;height:${height}%;left:calc(${lanes.get(p)*width}% + 1px);width:calc(${width}% - 2px)" data-action="${action}" data-id="${p.id}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${p.durationMinutes>=50&&!p.allDay?`<span class="event-time">${formatClock(p.time)}</span>`:''}${escapeHtml(p.title)}</button>`;
         }).join('')}</div>`;
       }).join('');
-      return `<div class="plan-week-scroll ${separated?'review-timeline':''}"><div class="plan-week">${header}<div class="plan-week-body">${axis}${days}</div></div></div>`;
+      return `<div class="plan-week-scroll ${separated?'review-timeline':''}"><div class="plan-week" style="--calendar-height:${hours*44}px;--calendar-hours:${hours}">${header}<div class="plan-week-body">${axis}${days}</div></div></div>`;
     }
     function formatAxisHour(hour) { return `${hour%12||12} ${hour<12?"AM":"PM"}`; }
     function formatClock(time) { const [hour,minute]=time.split(":").map(Number);return `${hour%12||12}:${String(minute).padStart(2,"0")} ${hour<12?"AM":"PM"}`; }
     function estimateControlsMarkup(item,i) {
       return `<details class="estimate-editor"><summary class="button small secondary">Adjust estimates</summary><form class="estimate-form" data-estimate="${i}"><label>Activity type<select name="type" aria-label="Activity type for ${escapeHtml(item.title)}"><option ${item.type==='To-do'?'selected':''}>To-do</option><option ${item.type==='Fun'?'selected':''}>Fun</option></select></label><label>Activity minutes<input name="duration" aria-label="Activity minutes for ${escapeHtml(item.title)}" type="number" min="5" max="1440" step="1" value="${item.durationMinutes}" required></label><label>Travel each way (min)<input name="travel" aria-label="Travel each way for ${escapeHtml(item.title)}" type="number" min="0" max="180" step="1" value="${item.travelMinutes||0}" required></label><label class="remember-estimate"><input name="contribute" type="checkbox" ${item.family&&state.sharedLearningAvailable?"checked":"disabled"}>Improve shared estimates with this correction</label><p class="helper" style="grid-column:1/-1;margin:0">${!item.family?"This activity stays in your draft because it has no matching shared activity family.":!state.sharedLearningAvailable?"Shared learning is unavailable. Open the local server to contribute.":"Only an activity family, Fun/To-do category, and rounded activity/travel minutes are sent. No event title or account details."}</p><button class="button small secondary" type="submit">Save estimate</button></form></details>`;
+    }
+    function quietFeedback(index) {
+      const parsed=Planner.parseQuiet(state.quietDrafts[index],index===7?[0,1,2,3,4,5,6]:[index]);
+      if(parsed.notice)return parsed.notice;
+      const groups=new Map();
+      parsed.ranges.forEach(range=>{const label=range.start==='00:00'&&range.end==='24:00'?'All day':formatClock(range.start)+'–'+(range.end==='24:00'?'midnight':formatClock(range.end));if(!groups.has(label))groups.set(label,[]);groups.get(label).push(range.day);});
+      return [...groups].map(([label,days])=>(index===7?(new Set(days).size===7?'Every day':days.map(day=>weekDays[day]).join(', '))+': ':days.some(day=>day!==index)?days.map(day=>weekDays[day]).join(', ')+': ':'')+label).join('; ');
+    }
+    function updateQuietTimes(index,value) {
+      state.quietDrafts[index]=value;
+      state.quietTimes=weekDays.map(()=>[]);
+      state.quietDrafts.forEach((raw,i)=>{
+        const parsed=Planner.parseQuiet(raw,i===7?[0,1,2,3,4,5,6]:[i]);
+        state.quietErrors[i]=parsed.notice;
+        parsed.ranges.forEach(({day,...range})=>state.quietTimes[day].push(range));
+      });
+      resetGeneratedSchedule();
+    }
+    function quietInputsMarkup() {
+      const labels=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday','Whole week'];
+      return `<section class="quiet-times" aria-labelledby="quiet-heading"><h3 id="quiet-heading">Set times to leave open</h3><p class="helper">Tell us when to keep your calendar free. Add multiple windows, like “before 8 am and 6–8 pm”, or say “all day”. The whole-week rule adds to every day’s times.</p><div class="quiet-grid">${labels.map((day,i)=>`<label class="quiet-row ${i===7?'weekly':''}" for="quiet-${i}"><strong>${day}</strong><span><input id="quiet-${i}" type="text" data-quiet-input="${i}" value="${escapeHtml(state.quietDrafts[i])}" placeholder="${i===7?'e.g. Before 8 am and after 9 pm':'e.g. 12–1 pm; 6–8 pm'}" aria-describedby="quiet-feedback-${i}" aria-invalid="${!!state.quietErrors[i]}"><small id="quiet-feedback-${i}" class="quiet-feedback ${state.quietErrors[i]?'error':''}" aria-live="polite">${escapeHtml(quietFeedback(i))}</small></span></label>`).join('')}</div></section>`;
+    }
+    function activityMarkup(item,i) {
+      const editing=state.editingIndex===i;
+      return `<div class="activity-row" id="activity-${i}">${editing?`<form class="item-inline-form" data-edit-item="${i}"><label for="edit-item-${i}">Edit activity</label><input id="edit-item-${i}" name="request" type="text" value="${escapeHtml(state.editingDraft)}" required aria-describedby="edit-item-hint-${i}"><p class="helper" id="edit-item-hint-${i}">Include any days, times, or restrictions.</p><button class="button small" type="submit">Save item</button><button class="button small secondary" type="button" data-action="cancelEditItem">Cancel</button></form>`:`<div class="activity-copy"><strong><span class="category-dot ${item.type==='Fun'?'fun':''}"></span>${escapeHtml(item.raw)}</strong><small>${escapeHtml(item.summary)} · ${escapeHtml(item.duration)} ${Planner.chunks(item).length>1?'total, in 30–45 min parts (last may be shorter)':'activity'} · ${item.travelMinutes||0} min travel each way · ${escapeHtml(item.estimateSource)}${item.notice?' · '+escapeHtml(item.notice):''}</small></div><span class="activity-kind">${item.type}</span><button class="button small secondary" data-action="editItem" data-id="${i}">Edit</button>${estimateControlsMarkup(item,i)}`}</div>`;
+    }
+    function saveEditedItem(value) {
+      if(state.editingIndex===null||!value.trim())return false;
+      const index=state.editingIndex,previous=state.items[index],item=Planner.parse(value);
+      state.selectedTasks=state.selectedTasks.filter(name=>name!==previous.title);
+      if(item.type==='To-do'&&state.selectedTasksInitialized)state.selectedTasks.push(item.title);
+      state.items[index]=item;state.editingIndex=null;state.editingDraft='';
+      resetGeneratedSchedule();renderList();
+      document.querySelector(`#activity-${index} [data-action="editItem"]`)?.focus();
+      return true;
     }
     function renderList() {
       const currentInput=document.getElementById("new-item");
@@ -545,18 +704,21 @@
         <p class="panel-intro">Say what you want to do and how often. Include days, times, or other details if they matter. We’ll work out the schedule.</p>
         <div class="schedule-prefs"><div class="prefs-head"><div><strong>Days to schedule</strong><p class="helper">${state.planDays.length} of 7 days selected for one-time activities.</p></div><button class="text-button" data-action="selectAllDays">Select all</button></div>
           <div class="day-checks">${weekDays.map((d,i)=>`<button class="day-pill ${state.planDays.includes(i) ? "checked" : ""}" data-action="planDay" data-id="${i}" aria-pressed="${state.planDays.includes(i)}">${d}</button>`).join("")}</div>
-          <details class="quiet-times"><summary>Set times to leave open</summary><p class="helper">Choose one window per day when nothing should be scheduled.</p><div class="quiet-labels"><span></span><span>Leave open from</span><span>Until</span></div><div class="quiet-grid">${weekDays.map((d,i)=>`<label class="quiet-row"><strong>${d}</strong><input type="time" value="${state.quietTimes[i].start}" data-quiet-day="${i}" data-quiet-part="start" aria-label="${d}: leave open from"><input type="time" value="${state.quietTimes[i].end}" data-quiet-day="${i}" data-quiet-part="end" aria-label="${d}: leave open until"></label>`).join("")}</div></details>
+          ${quietInputsMarkup()}
         </div>
         <div class="schedule-prefs"><strong>A balanced week</strong><p class="helper">Aim for 1 fun activity and 2 to-dos per day, spread across the week. Fixed plans, available time, and your list may change that balance.</p><label class="field-label" style="margin-top:12px" for="downtime-minutes">Downtime per selected day (minutes)</label><input id="downtime-minutes" type="number" min="0" max="120" step="5" value="${state.downtimeMinutes}"><p class="helper">We’ll protect this time where it fits, preferably in the evening. Set 0 to turn it off. Travel is reserved before and after outings; estimates aren’t based on directions.</p></div>
         <div class="list-tools" style="margin-top:24px"><strong>Your list</strong><span class="helper" style="margin:0">Review and adjust estimates.</span></div>
-        <div class="activity-list">${state.items.length ? state.items.map((item,i)=>`<div class="activity-row"><div class="activity-copy"><strong><span class="category-dot ${item.type === "Fun" ? "fun" : ""}"></span>${escapeHtml(item.raw)}</strong><small>${escapeHtml(item.summary)} · ${escapeHtml(item.duration)} activity · ${item.travelMinutes||0} min travel each way · ${escapeHtml(item.estimateSource)}${item.notice ? " · " + escapeHtml(item.notice) : ""}</small></div><span class="activity-kind">${item.type}</span><button class="button small secondary" data-action="editItem" data-id="${i}">Edit</button>${estimateControlsMarkup(item,i)}</div>`).join("") : `<p class="helper">Add an activity below to start your list.</p>`}</div>
-        <form class="add-item-form" id="add-item-form"><label class="sr-only" for="new-item">What and when?</label><input id="new-item" type="text" value="${escapeHtml(state.itemDraft)}" placeholder="What and when?" autocomplete="off" aria-describedby="item-help-hint"><button class="button small" type="submit">${state.editingIndex===null?"Add item":"Save item"}</button></form>
+        <div class="activity-list">${state.items.length ? state.items.map(activityMarkup).join('') : `<p class="helper">Add an activity below to start your list.</p>`}</div>
+        <form class="add-item-form" id="add-item-form"><label class="sr-only" for="new-item">What and when?</label><input id="new-item" type="text" value="${escapeHtml(state.itemDraft)}" placeholder="What and when?" autocomplete="off" aria-describedby="item-help-hint"><button class="button small" type="submit">Add item</button></form>
         <div class="item-help-line"><button class="item-help-button" data-action="itemHelp" aria-label="Help with what and when" aria-haspopup="dialog">?</button><span id="item-help-hint">Write it the way you’d say it.</span></div>
         <dialog id="item-help" aria-labelledby="item-help-title"><h3 id="item-help-title">Just tell us what and when.</h3><p>Write one activity and how often you want to do it, then press Enter. Keep going with your next idea.</p><ul><li>“Play Zelda daily”</li><li>“Every other day, play pickleball”</li><li>“Read for 20 minutes every evening”</li><li>“Finish the proposal by Friday”</li><li>“Swim three times this week, travel 15 minutes each way”</li><li>“Call Mom on Sunday at 3 pm”</li></ul><p>We’ll estimate the activity type, duration, and travel buffers, and use the timing you give us. Use Adjust estimates to correct them; optional contributions improve shared suggestions for recognized activity families without sending titles. You can add details like “quick,” “after work,” or “except Sunday.” Leave out the timing and we’ll find an opening.</p><p class="helper">Daily means all seven days. Every other day starts on Monday unless you say “starting Tuesday,” for example. This prototype understands common phrases; check the interpretation under each item. Unavailable slots stay unscheduled.</p><form method="dialog"><button class="button small">Got it</button></form></dialog>
         <div class="idea-box"><p><strong>Need a little inspiration?</strong><br>Get a fresh suggestion whenever you need one.</p><button class="button small secondary" data-action="idea">Give me an idea</button></div>
         ${navButtons("back", "toGoal", "Set a goal")}`, 2);
       document.getElementById("add-item-form").addEventListener("submit", e => {e.preventDefault();addItem(document.getElementById("new-item").value);});
       document.getElementById("new-item").addEventListener("input",e=>{state.itemDraft=e.target.value;});
+      document.querySelector('[data-edit-item]')?.addEventListener('submit',e=>{e.preventDefault();saveEditedItem(e.currentTarget.elements.request.value);});
+      document.querySelector('[data-edit-item] input')?.addEventListener('input',e=>{state.editingDraft=e.target.value;});
+      document.querySelector('[data-edit-item] input')?.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();actions.cancelEditItem();}});
       document.getElementById('downtime-minutes').addEventListener('change',e=>{state.downtimeMinutes=Math.max(0,Math.min(120,Number(e.target.value)||0));e.target.value=state.downtimeMinutes;resetGeneratedSchedule();});
       document.querySelectorAll('[data-estimate]').forEach(form=>form.addEventListener('submit',async e=>{
         e.preventDefault();const item=state.items[+form.dataset.estimate],fields=form.elements;
@@ -573,27 +735,33 @@
           }catch{toast('Estimate updated. Shared learning is unavailable; nothing was queued.');}
         }
       }));
-      document.querySelectorAll("[data-quiet-day]").forEach(el=>el.addEventListener("change",e=>{const day=+e.target.dataset.quietDay;state.quietTimes[day][e.target.dataset.quietPart]=e.target.value;resetGeneratedSchedule();}));
+      document.querySelectorAll('[data-quiet-input]').forEach(el=>el.addEventListener('input',e=>{
+        const index=+e.target.dataset.quietInput;updateQuietTimes(index,e.target.value);
+        const feedback=document.getElementById('quiet-feedback-'+index);
+        feedback.textContent=quietFeedback(index);feedback.classList.toggle('error',!!state.quietErrors[index]);e.target.setAttribute('aria-invalid',String(!!state.quietErrors[index]));
+      }));
     }
     function addItem(value) {
       const title = value.trim();
       if (!title) { document.getElementById("new-item")?.focus(); return; }
       const item = Planner.parse(title);
-      if (state.editingIndex !== null) {
-        const previous=state.items[state.editingIndex];
-        state.selectedTasks=state.selectedTasks.filter(name=>name!==previous.title);
-        state.items[state.editingIndex]=item;
-        state.editingIndex=null;
-      } else state.items.push(item);
+      state.items.push(item);
       if (item.type === "To-do" && state.selectedTasksInitialized) state.selectedTasks.push(item.title);
       state.itemDraft="";
       const field=document.getElementById("new-item");
       if(field) field.value="";
+      resetGeneratedSchedule();
       renderList();
       document.getElementById("new-item")?.focus();
     }
     function resetGeneratedSchedule() {
       state.items.forEach(item=>{item.occurrences=[];item.overrides={};});
+    }
+    function validateListInputs() {
+      if(state.editingIndex!==null){state.page=2;renderList();document.getElementById('edit-item-'+state.editingIndex)?.focus();toast('Save or cancel your activity edit first.');return false;}
+      const invalid=state.quietErrors.findIndex(Boolean);
+      if(invalid!==-1){state.page=2;renderList();document.getElementById('quiet-'+invalid)?.focus();toast('Clarify the highlighted time to leave open first.');return false;}
+      return true;
     }
     function renderGoal() {
       const isTasks = state.goalMode === "tasks";
@@ -604,9 +772,9 @@
       }
       shell(`<div class="panel-kicker">A goal for this week</div><h2>What would feel good to accomplish?</h2>
         <p class="panel-intro">Write it in your own words. Sunday will work out whether you’re counting completed tasks or time spent.</p>
-        <label class="field-label" for="goal-text">My goal</label><textarea id="goal-text" rows="3" placeholder="For example: Read for 3 hours this week, or finish 4 home projects">${escapeHtml(state.goalText)}</textarea>
+        <label class="field-label" for="goal-text">My goal</label><span class="koala-nook field-nook"><textarea id="goal-text" rows="3" placeholder="For example: Read for 3 hours this week, or finish 4 home projects">${escapeHtml(state.goalText)}</textarea></span>
         <div class="goal-summary"><small>We’ll track this as</small><strong id="goal-summary-text"></strong></div>
-        <div class="reward-field"><label class="field-label" for="reward">And your reward?</label><input id="reward" type="text" value="${escapeHtml(state.reward)}" placeholder="Something you’ll look forward to"></div>
+        <div class="reward-field"><label class="field-label" for="reward">And your reward?</label><span class="koala-nook field-nook"><input id="reward" type="text" value="${escapeHtml(state.reward)}" placeholder="Something you’ll look forward to"></span></div>
         <p class="helper">Your goal becomes a block on Sunday’s calendar so there’s room to work toward it.</p>
         ${navButtons("back", "toReview", "Build my week")}`, 3);
       document.getElementById('goal-text').addEventListener('input',e=>{state.goalText=e.target.value;deduceGoal();updateGoalSummary();});
@@ -642,19 +810,75 @@
       if(state.reviewMode==='before')return events;
       state.items.forEach((item,index)=>item.occurrences.forEach(occurrence=>events.push({
         id:`new-${index}-${occurrence.occurrenceIndex}`,kind:'new',index,occurrenceIndex:occurrence.occurrenceIndex,
-        title:item.title,day:occurrence.day,time:occurrence.time,durationMinutes:item.durationMinutes,type:item.type,travelMinutes:item.travelMinutes,keep:true
+        title:item.title+(occurrence.chunkCount>1?` (part ${occurrence.chunkIndex+1}/${occurrence.chunkCount})`:''),day:occurrence.day,time:occurrence.time,durationMinutes:occurrence.durationMinutes??item.durationMinutes,type:item.type,travelMinutes:item.travelMinutes,keep:true
       })));
       events.push(...state.downtime.map(block=>({...block,id:`downtime-${block.day}`,kind:'downtime',keep:true})));
-      events.push(goalBlock(events));
+      const goal=goalBlock(events);if(goal)events.push(goal);
       return events;
     }
     function goalBlock(events) {
       const taskItems=state.goalFocus==='all to-dos'?state.items.filter(item=>item.type==='To-do'):state.items.filter(item=>item.type==='To-do'&&state.selectedTasks.includes(item.title));
       const minutes=state.goalMode==='time'?Math.min(480,Math.max(30,Math.round(state.goalAmount*60))):Math.min(480,Math.max(30,taskItems.slice(0,state.goalAmount).reduce((sum,item)=>sum+item.durationMinutes,0)||state.goalAmount*60));
-      const busy=events.filter(event=>event.day===6&&event.keep!==false).map(event=>[Number(event.time.slice(0,2))*60+Number(event.time.slice(3,5)),Number(event.time.slice(0,2))*60+Number(event.time.slice(3,5))+(event.durationMinutes||60)]);
+      const busy=events.filter(event=>event.day===6&&event.keep!==false).map(event=>[Number(event.time.slice(0,2))*60+Number(event.time.slice(3,5))-(event.travelMinutes||0),Number(event.time.slice(0,2))*60+Number(event.time.slice(3,5))+(event.durationMinutes||60)+(event.travelMinutes||0)]);
+      Planner.quietRanges(state.quietTimes).filter(range=>range.day===6).forEach(range=>{
+        const toMinutes=time=>Number(time.slice(0,2))*60+Number(time.slice(3,5)),a=toMinutes(range.start),b=toMinutes(range.end);
+        if(a<b)busy.push([a,b]);else if(a>b)busy.push([a,1440],[0,b]);else busy.push([0,1440]);
+      });
       let start=9*60;
       for(;start+minutes<=21*60;start+=15)if(busy.every(([a,b])=>start+minutes<=a||start>=b))break;
+      if(start+minutes>21*60)return null;
       return {id:'goal-block',kind:'goal',day:6,time:`${String(Math.floor(start/60)).padStart(2,'0')}:${String(start%60).padStart(2,'0')}`,durationMinutes:minutes,title:state.goalText.trim()||'Work toward my weekly goal',type:'Goal',keep:true};
+    }
+    function calendarEventsToSave(events=reviewEvents()) {
+      return events.filter(event=>event.keep!==false&&(event.kind==='new'||event.kind==='goal')).map(event=>({
+        ...event,
+        title:event.kind==='goal'?`Weekly goal: ${event.title}`:event.title,
+        description:event.kind==='goal'?`Goal: ${state.goalText||event.title}\nReward: ${state.reward||'No reward selected'}`:''
+      }));
+    }
+    function calendarEventDates(event) {
+      const start=new Date(weekStart);start.setDate(start.getDate()+event.day);
+      const [hour,minute]=event.time.split(':').map(Number);start.setHours(hour,minute,0,0);
+      return {start,end:new Date(start.getTime()+(event.durationMinutes||60)*60000)};
+    }
+    function compactUtc(date) { return date.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z'); }
+    function googleCalendarEventUrl(event) {
+      const {start,end}=calendarEventDates(event),zone=Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const url=new URL('https://calendar.google.com/calendar/r/eventedit');
+      url.searchParams.set('action','TEMPLATE');
+      url.searchParams.set('dates',`${compactUtc(start)}/${compactUtc(end)}`);
+      url.searchParams.set('stz',zone);url.searchParams.set('etz',zone);
+      url.searchParams.set('text',event.title);
+      if(event.description)url.searchParams.set('details',event.description);
+      return url.href;
+    }
+    function escapeIcsText(value) {
+      return String(value||'').replace(/\\/g,'\\\\').replace(/\r\n|\r|\n/g,'\\n').replace(/;/g,'\\;').replace(/,/g,'\\,');
+    }
+    function foldIcsLine(line) {
+      const encoder=new TextEncoder();let folded=[],part='',bytes=0;
+      for(const character of line){const size=encoder.encode(character).length;if(bytes+size>75){folded.push(part);part=' '+character;bytes=size+1;}else{part+=character;bytes+=size;}}
+      folded.push(part);return folded.join('\r\n');
+    }
+    function buildIcs(events) {
+      const stamp=compactUtc(new Date());
+      const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//KoalatyTime//Weekly Planner//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:KoalatyTime weekly plan'];
+      events.forEach((event,index)=>{
+        const {start,end}=calendarEventDates(event);
+        const uid=`${Date.now()}-${index}-${Math.random().toString(36).slice(2)}@koalatytime`;
+        lines.push('BEGIN:VEVENT',`UID:${uid}`,`DTSTAMP:${stamp}`,`DTSTART:${compactUtc(start)}`,`DTEND:${compactUtc(end)}`,`SUMMARY:${escapeIcsText(event.title)}`);
+        if(event.description)lines.push(`DESCRIPTION:${escapeIcsText(event.description)}`);
+        lines.push('END:VEVENT');
+      });
+      lines.push('END:VCALENDAR');
+      return lines.map(foldIcsLine).join('\r\n')+'\r\n';
+    }
+    function downloadCalendarFile() {
+      const events=calendarEventsToSave();if(!events.length){toast('There are no new events to save yet.');return;}
+      const date=`${weekStart.getFullYear()}-${String(weekStart.getMonth()+1).padStart(2,'0')}-${String(weekStart.getDate()).padStart(2,'0')}`;
+      const blob=new Blob([buildIcs(events)],{type:'text/calendar;charset=utf-8'}),url=URL.createObjectURL(blob);
+      const link=document.createElement('a');link.href=url;link.download=`KoalatyTime-week-of-${date}.ics`;document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),10000);
     }
     function reviewAgendaMarkup(events) {
       const fullDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -687,21 +911,26 @@
       state.openReviewDay=next.day;return true;
     }
     function renderReview() {
-      allocate();const events=reviewEvents();
+      allocate();const events=reviewEvents(),saveEvents=calendarEventsToSave(events),goalSummary=events.find(event=>event.kind==='goal')||goalBlock(events);
       shell(`<div class="panel-kicker">Your week, at a glance</div><h2>Here’s a first draft.</h2>
         <p class="panel-intro">See your week before and after. Select a block or expand a day to review the details and adjust new activities.</p>
         <div class="calendar-toggle" role="group" aria-label="Compare your week"><button class="${state.reviewMode==='before'?'active':''}" data-action="reviewMode" data-id="before" aria-pressed="${state.reviewMode==='before'}">Before</button><button class="${state.reviewMode==='after'?'active':''}" data-action="reviewMode" data-id="after" aria-pressed="${state.reviewMode==='after'}">After</button></div>
         <p class="helper">${weekLabel} · ${escapeHtml(Intl.DateTimeFormat().resolvedOptions().timeZone)}</p>
         <div class="calendar-legend" aria-label="Calendar colors"><span><i class="legend-dot"></i>Existing plans</span><span><i class="legend-dot todo"></i>To-dos</span><span><i class="legend-dot fun"></i>Fun</span><span><i class="legend-dot rest"></i>Downtime</span><span><i class="legend-dot goal"></i>Weekly goal</span></div>
-        ${weekCalendarMarkup(events,{separated:true,action:'focusReviewEvent'})}
-        <p class="helper">All seven days, with overlapping plans side by side. Expand a day below for full titles and controls.</p>
-        ${reviewAgendaMarkup(events)}
+        ${calendarViewToggle()}
+        <div class="calendar-view-panel" ${state.calendarView==='week'?'':'hidden'}>${weekCalendarMarkup(events,{separated:true,action:'focusReviewEvent'})}<p class="helper">Select a block to open its full details. Scroll sideways to see every day.</p></div>
+        <div class="calendar-view-panel" ${state.calendarView==='agenda'?'':'hidden'}>${reviewAgendaMarkup(events)}</div>
         ${state.reviewMode==='after'&&state.unplaced.length?`<div class="unplaced"><strong>${state.unplaced.length} ${state.unplaced.length===1?'activity needs':'activities need'} more room</strong>${state.unplaced.map(entry=>`<p>${escapeHtml(entry.title)}: ${escapeHtml(entry.reason)}</p>`).join('')}<p>Adjust the request or open up time in Your list. These activities haven’t been placed.</p></div>`:''}
         <p class="helper">${state.reviewMode==='after'?'Aim: 1 fun activity for every 2 to-dos per day when the list and availability allow. Travel buffers protect outings; cream blocks show downtime.':'This is the week before adding your new activities. Excluded plans are faded.'}</p>
-        <div class="goal-summary"><small>Sunday goal block</small><strong>${escapeHtml(state.goalText||`${state.direction} ${state.goalAmount} ${state.goalMode==='tasks'?'tasks':'hours'}`)} · ${formatClock(events.find(event=>event.kind==='goal').time)} for ${events.find(event=>event.kind==='goal').durationMinutes} min · Reward: ${escapeHtml(state.reward||'choose a reward')}</strong></div>
-        ${state.publishError?`<p class="connection-status error" role="alert">${escapeHtml(state.publishError)}</p>`:''}
-        <p class="helper">Confirm to add the new activities and Sunday goal block to Google Calendar. Existing plans stay as they are.</p>
-        ${navButtons('back','publish',state.publishBusy?'Adding to calendar…':'Confirm and add to calendar')}`,4);
+        <div class="goal-summary"><small>Sunday goal block</small><strong>${escapeHtml(state.goalText||`${state.direction} ${state.goalAmount} ${state.goalMode==='tasks'?'tasks':'hours'}`)} · ${goalSummary?`${formatClock(goalSummary.time)} for ${goalSummary.durationMinutes} min`:'Not scheduled: no free Sunday window fits. Adjust your goal or protected times.'} · Reward: ${escapeHtml(state.reward||'choose a reward')}</strong></div>
+        ${state.reviewMode==='after'?`<section class="calendar-save-panel" aria-labelledby="calendar-save-title">
+          <h3 id="calendar-save-title">Take your plan with you</h3>
+          <p class="helper">KoalatyTime won’t connect to or change your calendar to save these events. Only new activities and your weekly goal are included; existing plans and protected downtime are left out.</p>
+          <div class="calendar-save-actions"><button class="button" data-action="downloadIcs">Download all events (.ics)</button></div>
+          <p class="helper">Import the file into Apple Calendar or Outlook, or import it into Google Calendar on a computer. On phones, use the individual Google links below for a simpler Google Calendar flow.</p>
+          <details class="calendar-link-details"><summary>Add events to Google Calendar individually (${saveEvents.length})</summary><div class="calendar-event-links">${saveEvents.map(event=>`<div class="calendar-event-link"><span>${escapeHtml(event.title)} · ${weekDays[event.day]} ${dates[event.day]}${event.time?' · '+formatClock(event.time):''}</span><a class="button small secondary" href="${escapeHtml(googleCalendarEventUrl(event))}" target="_blank" rel="noopener noreferrer">Add event</a></div>`).join('')}</div></details>
+        </section>`:'<p class="helper">Switch to After to download or add your new events to a calendar.</p>'}
+        ${navButtons('back','toWelcome','Finish')}`,4);
       document.querySelectorAll('.review-day-details').forEach(group=>group.addEventListener('toggle',()=>{
         const day=+group.dataset.day;if(group.open)state.openReviewDay=day;else if(state.openReviewDay===day)state.openReviewDay=null;
       }));
@@ -713,20 +942,13 @@
         if(!accepted)toast('That move does not fit. Check timing rules, travel, downtime, and existing plans.');
       }));
     }
-    function renderSuccess() {
-      const calendarNames = state.calendars.map(x=>x === "google" ? "Google Calendar" : "Apple Calendar").join(" and ") || "your calendar";
-      shell(`<div class="panel-kicker">Week planned</div><h2>You’ve made room for it all.</h2>
-        <p class="panel-intro">Your approved plans are on ${calendarNames}.</p>
-        <div class="summary-success"><span class="success-mark">✓</span><div><strong>${state.publishedCount} events added, including your Sunday goal block</strong><p>${state.imported.filter(x=>x.keep).length} existing plans kept. Your reward: ${escapeHtml(state.reward || "your choice")}.</p></div></div>
-        <div class="action-row"><button class="button" data-action="finish">Back to Sunday</button></div>
-        <p class="bottom-note">You can edit or move these events in Google Calendar anytime.</p>`, 4);
-    }
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
     function toast(message) { const el=document.getElementById("toast"); el.textContent=message; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2300); }
     const actions = {
       start: ()=>{state.page=0;render();warmGoogleSignIn();},
       itemHelp: ()=>document.getElementById("item-help").showModal(),
-      editItem: e=>{state.editingIndex=+e.currentTarget.dataset.id;const field=document.getElementById("new-item");field.value=state.items[state.editingIndex].raw;document.querySelector('#add-item-form button[type="submit"]').textContent="Save item";field.focus();field.select();},
+      editItem: e=>{state.editingIndex=+e.currentTarget.dataset.id;state.editingDraft=state.items[state.editingIndex].raw;renderList();const field=document.getElementById('edit-item-'+state.editingIndex);field.focus();field.select();},
+      cancelEditItem: ()=>{const index=state.editingIndex;state.editingIndex=null;state.editingDraft='';renderList();document.querySelector(`#activity-${index} [data-action="editItem"]`)?.focus();},
       calendar: ()=>connectGoogle(),
       connectGoogle: ()=>connectGoogle(),
       disconnectGoogle: ()=>{GoogleCalendar.disconnect();state.calendars=[];state.imported=state.imported.filter(x=>x.source!=="google");state.scanned=false;state.googleMessage="Disconnected.";render();},
@@ -740,17 +962,18 @@
       back: ()=>{state.page=Math.max(-1,state.page-1);render();},
       toPlans: ()=>advanceTo(1),
       toList: ()=>advanceTo(2),
-      toGoal: ()=>advanceTo(3),
+      toGoal: ()=>{if(!validateListInputs())return;advanceTo(3);},
       planDay: e=>{const day=+e.currentTarget.dataset.id;state.planDays=state.planDays.includes(day)?state.planDays.filter(x=>x!==day):[...state.planDays,day].sort((a,b)=>a-b);resetGeneratedSchedule();renderList();},
       selectAllDays: ()=>{state.planDays=[0,1,2,3,4,5,6];resetGeneratedSchedule();renderList();},
-      toReview: ()=>{if(!canBuildWeek()){toast("Add an activity or describe your weekly goal.");return;}if(state.items.length&&!state.planDays.length){toast("Select a day to schedule, or add a daily item.");return;}advanceTo(4);},
-      goStep: e=>{const step=+e.currentTarget.dataset.id;if(state.completed.has(step)){state.page=step;render();}},
+      toReview: ()=>{if(!validateListInputs())return;if(!canBuildWeek()){toast("Add an activity or describe your weekly goal.");return;}if(state.items.length&&!state.planDays.length){toast("Select a day to schedule, or add a daily item.");return;}advanceTo(4);},
+      goStep: e=>{const step=+e.currentTarget.dataset.id;if(state.completed.has(step)){if(step>2&&!validateListInputs())return;state.page=step;render();}},
       reviewMode: e=>{state.reviewMode=e.currentTarget.dataset.id;renderReview();},
+      calendarView: e=>{state.calendarView=e.currentTarget.dataset.id;state.page===4?renderReview():renderPlans();},
       goalMode: e=>{state.goalMode=e.currentTarget.dataset.id;if(state.goalMode==="time"&&(state.goalFocus==="selected tasks"||state.goalFocus==="all to-dos"))state.goalFocus="phone use";if(state.goalMode==="tasks")state.goalFocus="selected tasks";renderGoal();},
       idea: ()=>{const ideas=['Take a walk somewhere new','Try a new recipe','Visit a local bookstore','Call someone you miss','Make a playlist for the week','Try a beginner yoga video','Explore a nearby park','Have a screen-free coffee break','Go to a farmers market','Learn a simple new recipe','Take photos on a neighborhood walk','Write a note to someone','Visit a museum or gallery','Stretch for fifteen minutes','Plan a small day trip','Try a new lunch spot','Read outside for a while','Tidy one small corner','Watch a film you have never seen','Do a short creative project','Take yourself out for breakfast','Borrow a book from the library','Try a new board game','Go on a sunset walk','Make something by hand','Listen to a podcast on a walk','Plant herbs or care for a plant','Bake something to share','Spend an hour on a hobby','Do a local food crawl'];const used=new Set([...state.items.map(x=>x.title.toLowerCase()),...state.ideaHistory.slice(-8).map(x=>x.toLowerCase())]);const available=ideas.filter(x=>!used.has(x.toLowerCase()));const idea=(available.length?available:ideas)[Math.floor(Math.random()*(available.length||ideas.length))];state.ideaHistory.push(idea);addItem(idea);},
       removeItem: e=>{const i=+e.currentTarget.dataset.id;const removed=state.items.splice(i,1)[0];renderReview();toast(`Removed ${removed.title} from this draft.`);},
-      publish: async ()=>{if(state.publishBusy)return;state.publishError='';if(location.protocol==='file:'){state.publishError='Open Sunday at http://localhost:5173 to connect Google Calendar.';renderReview();return;}try{const pending=GoogleCalendar.connect();state.publishBusy=true;renderReview();await pending;const sundayPlans=await GoogleCalendar.readWeek(weekStart,[6]);const previous=new Map(state.imported.filter(plan=>plan.source==='google'&&plan.day===6).map(plan=>[plan.googleId,plan]));state.imported=state.imported.filter(plan=>plan.source!=='google'||plan.day!==6);state.imported.push(...sundayPlans.map(plan=>{const old=previous.get(plan.googleId);return old?{...plan,keep:old.keep,tentative:old.tentative}:plan;}));state.reviewMode='after';allocate();const events=reviewEvents().filter(event=>event.keep!==false&&event.kind!=='existing'&&event.kind!=='downtime').map(event=>({title:event.kind==='goal'?`Weekly goal: ${event.title}`:event.title,day:event.day,time:event.time,durationMinutes:event.durationMinutes||60,description:event.kind==='goal'?`Goal: ${state.goalText||event.title}\nReward: ${state.reward||'No reward selected'}`:''}));state.publishedCount=await GoogleCalendar.writeEvents(weekStart,events);state.calendars=['google'];state.published=true;state.publishBusy=false;advanceTo(5);}catch(error){state.publishBusy=false;state.publishError=error.message||'Could not add plans to Google Calendar. Try again.';renderReview();}},
-      finish: ()=>{state.page=-1;state.published=false;state.completed=new Set();render();}
+      downloadIcs: ()=>downloadCalendarFile(),
+      toWelcome: ()=>{state.page=-1;state.completed=new Set();render();}
     };
     async function loadSharedEstimates(){
       if(location.protocol==='file:')return;
@@ -765,5 +988,6 @@
     render();
     loadSharedEstimates();
   </script>
+  <script src="garden-motion.js"></script>
 </body>
 </html>

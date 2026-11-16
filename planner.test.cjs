@@ -97,3 +97,72 @@ test('unavailable time and all-day plans are never overbooked',()=>{
   assert.equal(p.schedule(items,[0],quiet(),imported,{downtime}).length,1);
   assert.equal(downtime.length,0);assert.equal(items[0].occurrences.length,0);
 });
+
+const examples=require('./parser-examples.json');
+for(const {text,expected} of examples.activities)test('activity interpretation: '+text,()=>{
+  const item=planner().parse(text);
+  for(const [key,value] of Object.entries(expected))assert.deepEqual(JSON.parse(JSON.stringify(item[key])),value,key);
+});
+for(const {text,days:scope,ranges} of examples.protectedTimes)test('protected-time interpretation: '+text,()=>{
+  const actual=planner().parseQuiet(text,scope);
+  assert.equal(actual.notice,'');assert.deepEqual(JSON.parse(JSON.stringify(actual.ranges)),ranges);
+});
+
+test('weekend exclusions remain hard constraints even when weekdays are full',()=>{
+  const p=planner();
+  for(const {text} of examples.activities.filter(example=>example.expected.excluded?.includes(6))){
+    const item=p.parse(text),imported=days.slice(0,5).map(day=>({day,time:'00:00',durationMinutes:1440,allDay:true,keep:true}));
+    assert(p.schedule([item],days,quiet(),imported).length>0,text);assert.equal(item.occurrences.length,0,text);
+  }
+});
+
+test('split tasks fit fragmented availability, preserve totals, and respect deadlines',()=>{
+  const p=planner(),item=p.parse('Homework for 90 minutes by Wednesday, not on Sat or Sun');
+  const unavailable=days.map(day=>day<=2?[{start:'00:00',end:'09:00'},{start:'09:30',end:'24:00'}]:[{start:'00:00',end:'24:00'}]);
+  assert.equal(p.schedule([item],days,unavailable,[],{downtimeMinutes:0}).length,0);
+  assert.equal(item.occurrences.length,3);
+  assert.equal(item.occurrences.reduce((sum,occ)=>sum+occ.durationMinutes,0),90);
+  assert(item.occurrences.every(occ=>occ.day<=2&&occ.time==='09:00'&&occ.durationMinutes===30));
+});
+
+test('split durations preserve every minute and respect fixed appointments and single sittings',()=>{
+  const p=planner();
+  for(let duration=46;duration<=200;duration++){
+    const item=p.parse(`Project for ${duration} minutes`),parts=p.chunks(item);
+    assert.equal(parts.reduce((a,b)=>a+b,0),duration);
+    assert(parts.every((value,index)=>value<=45&&(value>=30||index===parts.length-1)));
+  }
+  assert.equal(p.chunks(p.parse('Homework Monday at 10 am for 90 minutes')).length,1);
+  assert.equal(p.chunks(p.parse('Homework for 90 minutes in one sitting')).length,1);
+  assert.equal(p.chunks(p.parse('Movie for 120 minutes')).length,1);
+});
+
+test('partial split tasks report the remaining parts instead of losing time',()=>{
+  const p=planner(),item=p.parse('Project for 90 minutes Monday');
+  const unavailable=days.map(()=>[{start:'00:00',end:'09:00'},{start:'09:45',end:'24:00'}]);
+  const unplaced=p.schedule([item],days,unavailable,[],{downtimeMinutes:0});
+  assert.equal(item.occurrences.length,1);assert.equal(item.occurrences[0].durationMinutes,45);
+  assert.equal(unplaced.length,1);assert.match(unplaced[0].reason,/45 min/);
+});
+
+test('multiple protected windows constrain activities and downtime',()=>{
+  const p=planner(),unavailable=days.map(()=>[]),downtime=[];
+  for(const {day,...range} of p.parseQuiet('before 9 am and after 10 am').ranges)unavailable[day].push(range);
+  unavailable[0].push(...p.parseQuiet('9–9:30 am',[0]).ranges);
+  const items=[p.parse('Read Monday for 30 minutes')];
+  assert.equal(p.schedule(items,days,unavailable,[],{downtimeMinutes:0,downtime}).length,0);
+  assert.equal(items[0].occurrences[0].time,'09:30');
+  p.schedule([],days,unavailable,[],{downtimeMinutes:30,downtime});
+  for(const block of downtime)assert(Number(block.time.slice(0,2))===9);
+});
+
+test('invalid or unsupported protected-time wording asks for clarification',()=>{
+  const p=planner();
+  for(const text of ['during lunch','25:00–26:00','9 am to 5 pm plus whenever I am busy','Monday 9–5'])assert(p.parseQuiet(text,[1]).notice,text);
+  assert.equal(p.parseQuiet('').notice,'');
+});
+
+test('unrecognized negative day requests remain unplaced rather than scheduling on those days',()=>{
+  const p=planner(),item=p.parse('Project, do not ever arrange anything for Saturday');
+  assert(item.notice);assert.equal(p.schedule([item],days,quiet(),[]).length,1);assert.equal(item.occurrences.length,0);
+});

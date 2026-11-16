@@ -1,0 +1,31 @@
+{
+  "activities": [
+    {"text":"Homework, not on Sat or Sun","expected":{"excluded":[5,6],"fixedDays":null}},
+    {"text":"Homework, do not put the event on Saturday or Sunday","expected":{"excluded":[5,6],"fixedDays":null}},
+    {"text":"Homework, don't schedule this event on sat or sun","expected":{"excluded":[5,6],"fixedDays":null}},
+    {"text":"Homework, don’t schedule this on weekends","expected":{"excluded":[5,6],"fixedDays":null}},
+    {"text":"Project, not to be scheduled on weekends","expected":{"excluded":[5,6],"fixedDays":null}},
+    {"text":"Project, never on the weekend","expected":{"excluded":[5,6],"fixedDays":null}},
+    {"text":"Project, avoid Sat/Sun","expected":{"excluded":[5,6],"fixedDays":null}},
+    {"text":"Project except Saturday and Sunday","expected":{"excluded":[5,6],"fixedDays":null}},
+    {"text":"Homework daily, but not on weekends","expected":{"excluded":[5,6],"fixedDays":[0,1,2,3,4]}},
+    {"text":"Homework, no weekends, by Fri","expected":{"excluded":[5,6],"deadline":4}},
+    {"text":"Homework not on Mon–Fri","expected":{"excluded":[0,1,2,3,4],"fixedDays":null}},
+    {"text":"Read Mon–Fri for 30 minutes","expected":{"fixedDays":[0,1,2,3,4],"durationMinutes":30}},
+    {"text":"Project for 3 hours in 30–45 minute chunks","expected":{"durationMinutes":180,"splittable":true}},
+    {"text":"Homework for 2 hours in one sitting","expected":{"durationMinutes":120,"splittable":false}},
+    {"text":"Projects for 90 minutes","expected":{"durationMinutes":90,"splittable":true,"type":"To-do"}}
+  ],
+  "protectedTimes": [
+    {"text":"before 8 am and after 9 pm","days":[0],"ranges":[{"day":0,"start":"00:00","end":"08:00"},{"day":0,"start":"21:00","end":"24:00"}]},
+    {"text":"12–1 pm; 6–8 pm","days":[1],"ranges":[{"day":1,"start":"12:00","end":"13:00"},{"day":1,"start":"18:00","end":"20:00"}]},
+    {"text":"between 6 and 8 pm","days":[2],"ranges":[{"day":2,"start":"18:00","end":"20:00"}]},
+    {"text":"9am-5pm","days":[3],"ranges":[{"day":3,"start":"09:00","end":"17:00"}]},
+    {"text":"Keep 9 to 5 free for work","days":[4],"ranges":[{"day":4,"start":"09:00","end":"17:00"}]},
+    {"text":"all day","days":[5],"ranges":[{"day":5,"start":"00:00","end":"24:00"}]},
+    {"text":"from 10 pm to 2 am","days":[0],"ranges":[{"day":0,"start":"22:00","end":"24:00"},{"day":1,"start":"00:00","end":"02:00"}]},
+    {"text":"Monday and Tuesday 9–5","days":[0,1,2,3,4,5,6],"ranges":[{"day":0,"start":"09:00","end":"17:00"},{"day":1,"start":"09:00","end":"17:00"}]},
+    {"text":"Monday 9–5 and Tuesday 10–6","days":[0,1,2,3,4,5,6],"ranges":[{"day":0,"start":"09:00","end":"17:00"},{"day":1,"start":"10:00","end":"18:00"}]},
+    {"text":"Friday through Sunday all day","days":[0,1,2,3,4,5,6],"ranges":[{"day":4,"start":"00:00","end":"24:00"},{"day":5,"start":"00:00","end":"24:00"},{"day":6,"start":"00:00","end":"24:00"}]}
+  ]
+}
