@@ -17,10 +17,11 @@ Open [http://localhost:5173](http://localhost:5173). No package installation is 
 ## What works
 
 - Read existing events from your primary Google Calendar after OAuth setup.
+- Optionally add reviewed new activities and the weekly goal to Google Calendar after a separate write-permission prompt.
 - Review plans in a responsive seven-day calendar with expandable day details.
 - Enter activities in plain language, with days, times, recurrence, durations, and travel buffers.
 - Correct estimated categories, durations, and travel time.
-- Export approved new activities and the weekly goal as one `.ics` file, or open prefilled Google Calendar links for individual events.
+- Export approved new activities and the weekly goal as one `.ics` file, open prefilled Google Calendar links, or add the set directly to Google Calendar.
 - Optionally contribute predefined activity families and rounded numeric corrections to a shared aggregate model. Event titles and account information are excluded from contributions.
 - Spread new activities across the week, aiming for one fun activity per two to-dos per day where the list and available time allow.
 - Reserve adjustable downtime, compare the week before and after, and move or remove activities in Review.
@@ -29,7 +30,7 @@ Open [http://localhost:5173](http://localhost:5173). No package installation is 
 - Break homework, projects, and similar focused tasks into 30–45 minute parts while preserving the total requested time; the final part can be shorter. Fixed start times, travel, and requests for one sitting stay together. Parts that cannot fit are reported.
 - Meet animated koala companions that wander along page elements and appear with varied motions on button hover or focus. Reduced-motion preferences keep the background and companions still.
 
-Reading existing Google Calendar events is optional and requires the OAuth setup below. Saving a new plan uses an `.ics` download or individual Google Calendar links, so KoalatyTime does not need write access to a visitor's calendar. The `.ics` file can be imported into other calendar apps.
+Reading existing Google Calendar events is optional. Directly adding a plan is also optional and requests Google Calendar write access only when selected on the final Review screen. Visitors can still use an `.ics` download or individual Google Calendar links without granting write access. The `.ics` file can be imported into other calendar apps.
 
 ## Google Calendar
 

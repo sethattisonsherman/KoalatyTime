@@ -21,7 +21,7 @@ Open http://localhost:5173. Keep PowerShell running. Opening index.html as a fil
 2. In APIs & Services, enable **Google Calendar API**.
 3. Open **Google Auth platform → Branding** and configure the app name (**KoalatyTime**), support email, and contact email. Keep this name consistent with the public website.
 4. Under **Audience**, choose **External** if using a personal Gmail account. Keep publishing status **Testing** and add your Google email as a test user. An organization may instead permit Internal access.
-5. Under **Data Access**, add `https://www.googleapis.com/auth/calendar.events.owned.readonly`. KoalatyTime uses this read-only permission to display existing plans from your primary calendar. Remove the older `calendar.events` scope if it is still listed. New plans are saved with a local `.ics` download or prefilled Google Calendar links; KoalatyTime does not write to calendars through the API.
+5. Under **Data Access**, add both `https://www.googleapis.com/auth/calendar.events.owned.readonly` and `https://www.googleapis.com/auth/calendar.events`. The first is used only if someone chooses to read existing plans from the primary calendar. The broader write permission is requested only after they click **Add all events to Google Calendar** on the Review screen. Keep the app in Testing and add each demo account as a test user.
 6. Under **Clients**, create a client with application type **Web application**.
 7. Add the exact **Authorized JavaScript origin** shown in your browser's address bar. For the local server, add `http://localhost:5173`. Origins must match the scheme, host, and port exactly; do not add a path or trailing slash. If you also use another hostname or port, add that exact origin too. No redirect URI is needed for this popup token flow.
 8. Set the public client ID ending in `.apps.googleusercontent.com` as `googleClientId` in **config.js**. Do not use a client secret. Save and refresh the page. Google configuration changes can take a few minutes to apply.
@@ -32,12 +32,12 @@ Token flow: https://developers.google.com/identity/oauth2/web/guides/use-token-m
 ## 3. Try real plans
 
 1. Click **Plan this week**, then **Connect Google Calendar** once to open the account chooser. Sunday loads Google's sign-in library while you move through the planning flow.
-2. Choose your test account and approve read-only calendar access. This lets KoalatyTime read existing plans from your primary calendar. If access is denied, check your test-user list, Calendar API enablement, and exact localhost origin. You can skip calendar connection and still try the planner and save the resulting plan.
+2. Choose your test account and approve read-only calendar access only if you want the app to read existing plans. You can skip it and still try the planner. On the final Review screen, **Add all events to Google Calendar** asks separately for write access before adding anything to the primary calendar. The `.ics` download and individual Google Calendar links remain available without write access.
 3. Continue to **Plans**, select days, and click **Check selected days**.
 4. The primary Google calendar's events for the displayed upcoming Monday–Sunday week appear. All dates and times use the browser's time zone, shown beside the week. Recurring events are expanded; overnight and all-day events are split across days. Cancelled events and invitations you declined are omitted. Events marked free start excluded.
 5. Check again to refresh those days. Imports replace prior Google results for the checked days without duplicating them; your exclude/tentative choices are retained for matching events. A failed request leaves previous results intact.
 
-Tokens and plans stay in this tab's memory. Refreshing clears them. Expired tokens require connecting again. Disconnect revokes access and removes imported Google plans from this draft. KoalatyTime reads only the primary calendar and never changes or deletes existing events. At Review, download the new activities and weekly goal as one `.ics` file, or add items to Google Calendar individually through prefilled event links. A downloaded/imported file is a snapshot and does not sync later edits.
+Tokens and plans stay in this tab's memory. Refreshing clears them. Expired tokens require connecting again. Disconnect revokes access and removes imported Google plans from this draft. KoalatyTime reads only the primary calendar. At Review, **Add all events to Google Calendar** creates the new activities and weekly goal on that calendar after you approve write access; existing events are not edited or deleted. You can also download the new activities and weekly goal as one `.ics` file or use the prefilled Google Calendar link for each event. These are one-time additions; later edits in KoalatyTime do not sync automatically.
 
 For public release, complete Google's consent/verification requirements for the audience and scopes, publish privacy and data-deletion information, and deploy on an authorized HTTPS origin. This local setup does not claim to cover those production steps.
 
@@ -51,6 +51,6 @@ To let accounts beyond the test-user list connect, change **Audience → Publish
 
 The Plans page reviews existing Google Calendar events. A full week calendar sits above day accordions ordered Monday through Sunday. Within each day, all-day events come first, followed by timed events in start-time order. Excluding or marking an event tentative changes only this draft. Manual plan entry and screenshot uploads are not currently offered.
 
-## Save a plan without Google OAuth
+## Save a plan without Google write access
 
-The Review page can generate a local `.ics` file containing the new activities and weekly goal. It does not upload the draft or use a Google access token. Import the file into Google Calendar on a computer, Apple Calendar, or Outlook. For a phone-friendly Google Calendar flow, open the prefilled link for each event and save it in Google Calendar. These are one-time additions; later edits in KoalatyTime do not sync automatically.
+The Review page can generate a local `.ics` file containing the new activities and weekly goal without a Google access token. Import it into Google Calendar on a computer, Apple Calendar, or Outlook. For a phone-friendly Google Calendar flow, open the prefilled link for each event and save it in Google Calendar. These are one-time additions; later edits in KoalatyTime do not sync automatically.

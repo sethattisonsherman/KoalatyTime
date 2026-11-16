@@ -1,7 +1,8 @@
 // Google Identity Services: tokens live only in memory for this tab.
 const GoogleCalendar = (() => {
-  const scope = 'https://www.googleapis.com/auth/calendar.events.owned.readonly';
-  let token = '', expiresAt = 0, loading, client;
+  const readScope = 'https://www.googleapis.com/auth/calendar.events.owned.readonly';
+  const writeScope = 'https://www.googleapis.com/auth/calendar.events';
+  let token = '', tokenScope = '', expiresAt = 0, loading, client;
   function load() {
     if (window.google?.accounts?.oauth2) return Promise.resolve();
     return loading ||= new Promise((resolve, reject) => {
@@ -24,12 +25,13 @@ const GoogleCalendar = (() => {
       if (!window.SUNDAY_CONFIG?.googleClientId) { reject(new Error('Add your public Google OAuth client ID to config.js first. See GOOGLE_CALENDAR_SETUP.md.')); return; }
       if (!window.google?.accounts?.oauth2) { reject(new Error('Google sign-in is still loading. Go back to the calendar step and try again.')); return; }
       client = google.accounts.oauth2.initTokenClient({
-        client_id: window.SUNDAY_CONFIG.googleClientId, scope,
+        client_id: window.SUNDAY_CONFIG.googleClientId, scope: readScope,
         callback: response => {
-          if (response.error || !google.accounts.oauth2.hasGrantedAllScopes(response, scope)) {
+          if (response.error || !google.accounts.oauth2.hasGrantedAllScopes(response, readScope)) {
             reject(new Error('Calendar access was not granted. Try connecting again and allow calendar reading.')); return;
           }
           token = response.access_token;
+          tokenScope = readScope;
           expiresAt = Date.now() + Number(response.expires_in) * 1000;
           resolve();
         },
@@ -39,9 +41,33 @@ const GoogleCalendar = (() => {
     });
   }
   const connected = () => !!token && Date.now() < expiresAt - 30000;
+  function requestWriteAccess() {
+    if (connected() && tokenScope === writeScope) return Promise.resolve();
+    if (location.protocol === 'file:') return Promise.reject(new Error('Open the hosted KoalatyTime site or http://localhost:5173 to add events directly.'));
+    if (!window.SUNDAY_CONFIG?.googleClientId) return Promise.reject(new Error('Google Calendar is not configured for this site. You can still download the .ics file.'));
+    if (!window.google?.accounts?.oauth2) return Promise.reject(new Error('Google sign-in is still loading. Try again in a moment.'));
+    return new Promise((resolve, reject) => {
+      const writeClient = google.accounts.oauth2.initTokenClient({
+        client_id: window.SUNDAY_CONFIG.googleClientId,
+        scope: writeScope,
+        callback: response => {
+          if (response.error || !google.accounts.oauth2.hasGrantedAllScopes(response, writeScope)) {
+            reject(new Error('Google Calendar write access was not granted. You can still use the .ics download or individual Google links.')); return;
+          }
+          token = response.access_token;
+          tokenScope = writeScope;
+          expiresAt = Date.now() + Number(response.expires_in) * 1000;
+          resolve();
+        },
+        error_callback: () => reject(new Error('Google sign-in was closed or blocked. Allow popups and try again.'))
+      });
+      // This runs from the button click, so Google can open its consent dialog.
+      writeClient.requestAccessToken({ prompt: 'consent' });
+    });
+  }
   function disconnect() {
     if (token) google.accounts.oauth2.revoke(token, () => {});
-    token = ''; expiresAt = 0;
+    token = ''; tokenScope = ''; expiresAt = 0;
   }
   function segments(events, start, selectedDays) {
     const result = [];
@@ -81,5 +107,28 @@ const GoogleCalendar = (() => {
     } while (pageToken);
     return segments(events, start, selectedDays);
   }
-  return { prepare, connect, connected, disconnect, readWeek, segments };
+  async function addEvents(events) {
+    if (!connected()) throw new Error('Your Google session expired. Click Add to Google Calendar again to reconnect.');
+    const created = [];
+    for (const event of events) {
+      try {
+        const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(event)
+        });
+        if (!response.ok) {
+          if (response.status === 401) { token = ''; tokenScope = ''; throw new Error('Your Google session expired. Click Add to Google Calendar again to reconnect.'); }
+          if (response.status === 403) throw new Error('Google denied permission to add events. Check that calendar.events is enabled for this OAuth app and that your account is a test user.');
+          throw new Error('Google Calendar could not add an event. Try again shortly.');
+        }
+        created.push(await response.json());
+      } catch (error) {
+        error.created = created;
+        throw error;
+      }
+    }
+    return created;
+  }
+  return { prepare, connect, connected, disconnect, readWeek, requestWriteAccess, addEvents, segments };
 })();
