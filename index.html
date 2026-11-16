@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f7f5">
+  <title>Sunday — Make room for your week</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f4f7f5;
+      --surface: #ffffff;
+      --ink: #1e3430;
+      --muted: #687a75;
+      --line: #dce5e1;
+      --green: #28685a;
+      --green-dark: #1d5146;
+      --mint: #e4f1ec;
+      --lime: #d9ed9f;
+      --blue: #e6edf8;
+      --amber: #f5edcf;
+      --rose: #f6e7e2;
+      --radius: 18px;
+      --shadow: 0 16px 44px rgba(30, 52, 48, .07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--paper);
+      font: 16px/1.5 "Aptos", "Segoe UI", system-ui, sans-serif;
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid #81b7a8;
+      outline-offset: 3px;
+    }
+    .topbar {
+      height: 72px;
+      padding: 0 max(24px, calc((100vw - 1180px) / 2));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(30, 52, 48, .08);
+      background: rgba(255,255,255,.74);
+    }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 700; letter-spacing: -.03em; }
+    .brand-mark {
+      width: 34px; height: 34px; display: grid; place-items: center;
+      border-radius: 11px 11px 11px 4px; color: var(--green-dark); background: var(--lime);
+      font-size: 18px; font-weight: 800;
+    }
+    .demo-tag { padding: 6px 10px; border-radius: 999px; color: #61736d; background: #edf2ef; font-size: 12px; }
+    .shell { max-width: 1180px; margin: 0 auto; padding: 42px 24px 76px; }
+    .welcome { max-width: 760px; margin: 36px auto 0; }
+    .welcome-mark {
+      width: 58px; height: 58px; display: grid; place-items: center; margin-bottom: 28px;
+      border-radius: 19px 19px 19px 7px; background: var(--lime); font-size: 28px;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 680px; margin-bottom: 15px; font-size: clamp(36px, 5vw, 58px); line-height: 1.05; letter-spacing: -.055em; font-weight: 650; }
+    h2 { margin-bottom: 8px; font-size: clamp(27px, 3vw, 36px); line-height: 1.14; letter-spacing: -.045em; font-weight: 650; }
+    h3 { margin-bottom: 5px; font-size: 17px; letter-spacing: -.02em; }
+    .lede { max-width: 560px; color: var(--muted); font-size: 18px; }
+    .week-stamp { margin: 30px 0 30px; padding: 19px 21px; display: flex; justify-content: space-between; align-items: center; background: #e9f0eb; border-radius: 14px; }
+    .week-stamp small { color: var(--muted); }
+    .week-stamp strong { display: block; font-size: 17px; }
+    .steps-wrap { display: flex; justify-content: center; margin: 0 auto 42px; }
+    .steps { display: flex; gap: 0; max-width: 800px; width: 100%; align-items: center; }
+    .step { display: flex; align-items: center; gap: 8px; color: #92a09b; font-size: 12px; white-space: nowrap; }
+    .step button { padding: 0; display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; color: inherit; font: inherit; }
+    .step button:hover { color: var(--green-dark); }
+    .step .dot { width: 23px; height: 23px; display: grid; place-items: center; border: 1px solid #cbd7d2; border-radius: 50%; background: var(--paper); font-size: 11px; }
+    .step.active { color: var(--green-dark); font-weight: 700; }
+    .step.active .dot { border-color: var(--green); background: var(--green); color: white; }
+    .step.done .dot { border-color: #bad6cb; background: var(--mint); color: var(--green-dark); }
+    .step-line { flex: 1; height: 1px; min-width: 12px; margin: 0 12px; background: var(--line); }
+    .workspace { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 54px; align-items: start; }
+    .side-note { padding-top: 14px; }
+    .side-note .tiny-title { margin-bottom: 12px; color: #91a19a; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .side-note p { max-width: 215px; color: var(--muted); font-size: 14px; }
+    .mini-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 24px; }
+    .mini-day { padding: 8px 0; text-align: center; color: var(--muted); font-size: 10px; }
+    .mini-day b { display: block; margin-top: 3px; color: var(--ink); font-size: 13px; }
+    .main-panel { min-width: 0; padding: 34px; background: var(--surface); border: 1px solid rgba(30,52,48,.06); border-radius: 22px; box-shadow: var(--shadow); }
+    .panel-kicker { margin-bottom: 13px; color: var(--green); font-size: 13px; font-weight: 650; }
+    .panel-intro { max-width: 610px; color: var(--muted); }
+    .action-row { display: flex; gap: 11px; align-items: center; margin-top: 27px; }
+    .button { min-height: 48px; padding: 0 19px; display: inline-flex; justify-content: center; align-items: center; gap: 9px; border: 0; border-radius: 12px; background: var(--green); color: white; font-weight: 650; transition: background .16s ease, transform .16s ease; }
+    .button:hover { background: var(--green-dark); transform: translateY(-1px); }
+    .button.secondary { border: 1px solid var(--line); background: white; color: var(--ink); }
+    .button.secondary:hover { background: #f5f8f6; }
+    .button.quiet { padding: 0 12px; color: var(--green); background: transparent; }
+    .button.small { min-height: 38px; padding: 0 13px; font-size: 14px; }
+    .text-button { padding: 5px 0; border: 0; color: var(--green); background: transparent; font-size: 14px; font-weight: 600; }
+    .text-button:hover { text-decoration: underline; }
+    .choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; margin-top: 25px; }
+    .choice {
+      width: 100%; min-height: 90px; padding: 17px; display: flex; align-items: center; gap: 14px;
+      text-align: left; border: 1px solid var(--line); border-radius: 15px; background: white; color: var(--ink);
+    }
+    .choice:hover { border-color: #9fbeaf; background: #fbfdfc; }
+    .choice.selected { border: 2px solid var(--green); padding: 16px; background: #f5fbf8; }
+    .choice-icon { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border-radius: 13px; background: #edf2ef; color: var(--green-dark); font-weight: 750; }
+    .choice-copy { min-width: 0; flex: 1; }
+    .choice-copy strong { display: block; }
+    .choice-copy small { color: var(--muted); }
+    .check { width: 21px; height: 21px; display: grid; place-items: center; border: 1px solid #cbd7d2; border-radius: 50%; color: transparent; font-size: 12px; }
+    .choice.selected .check { border-color: var(--green); background: var(--green); color: white; }
+    .helper { margin: 14px 0 0; color: #788781; font-size: 13px; }
+    .source-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 22px; }
+    .source-option { padding: 13px 14px; border: 1px solid var(--line); border-radius: 13px; background: white; color: var(--ink); text-align: left; }
+    .source-option strong { display: block; font-size: 14px; }
+    .source-option span { color: var(--muted); font-size: 12px; }
+    .source-option.selected { border-color: var(--green); background: var(--mint); }
+    .source-input { margin-top: 16px; }
+    .field-label { display: block; margin-bottom: 7px; font-size: 14px; font-weight: 650; }
+    textarea, input[type="text"], input[type="number"], select {
+      width: 100%; border: 1px solid #d4dfda; border-radius: 11px; background: #fff; color: var(--ink);
+    }
+    textarea { min-height: 150px; padding: 14px 15px; resize: vertical; line-height: 1.65; }
+    input[type="text"], input[type="number"], select { min-height: 44px; padding: 0 12px; }
+    textarea::placeholder, input::placeholder { color: #9aa8a2; }
+    .source-scan { margin-top: 18px; padding: 16px; border-radius: 14px; background: #f2f6f3; }
+    .source-scan-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .day-checks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .day-pill { padding: 6px 10px; border: 1px solid #d4dfda; border-radius: 99px; background: white; color: #52645e; font-size: 12px; }
+    .day-pill.checked { border-color: #a8c9ba; background: var(--mint); color: var(--green-dark); }
+    .found-list { margin-top: 15px; display: grid; gap: 7px; }
+    .found-item { padding: 10px 11px; display: flex; align-items: center; gap: 10px; border-radius: 10px; background: white; font-size: 13px; }
+    .found-item label { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .found-item small { color: var(--muted); }
+    .tentative-label { padding: 3px 8px; border-radius: 99px; background: var(--amber); color: #786428; font-size: 11px; }
+    .plan-section { margin-top: 22px; padding-top: 20px; border-top: 1px solid #e5ece8; }
+    .plan-section h3 { margin-bottom: 4px; }
+    .plan-current-list { display: grid; gap: 7px; margin-top: 13px; }
+    .plan-current { padding: 10px 11px; display: grid; grid-template-columns: 22px minmax(0,1fr) auto; align-items: center; gap: 8px; border: 1px solid #e5ece8; border-radius: 10px; }
+    .plan-current .plan-name { min-width: 0; }
+    .plan-current .plan-name strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+    .plan-current .plan-name small { color: var(--muted); font-size: 11px; }
+    .plan-current.excluded { opacity: .55; }
+    .plan-week-scroll { margin-top: 14px; }
+    .plan-week { --calendar-height: clamp(600px, 85svh, 840px); width: 100%; min-width: 0; }
+    .plan-week-head, .plan-week-body { display: grid; grid-template-columns: 36px repeat(7,minmax(0,1fr)); }
+    .plan-week-head { align-items: end; }
+    .plan-week-head .plan-day-head { min-height: 39px; padding: 3px 5px 6px; border-bottom: 1px solid #dce5e1; text-align: center; }
+    .plan-week-head .plan-day-head strong { display: block; font-size: 11px; }
+    .plan-week-head .plan-day-head span { color: var(--muted); font-size: 10px; }
+    .plan-time-axis { height: var(--calendar-height); display: grid; grid-template-rows: repeat(24,minmax(0,1fr)); }
+    .plan-time-label { padding: 0 5px 0 0; color: #75847e; text-align: right; font-size: 9px; line-height: 1; white-space: nowrap; }
+    .plan-day { position: relative; min-width: 0; height: var(--calendar-height); border-left: 1px solid #e5ece8; background: repeating-linear-gradient(to bottom,#e7ede9 0,#e7ede9 1px,transparent 1px,transparent calc(var(--calendar-height) / 24)); }
+    .plan-event { position: absolute; left: 1px; right: 1px; min-height: 7px; overflow: hidden; padding: 0 2px; border: 0; border-left: 3px solid #5a91c7; border-radius: 3px; background: #d5e6f7; color: var(--ink); font-size: 9px; text-align: left; z-index: 1; }
+    .plan-event.tentative { border-left-color: #c2a43b; background: #f8f2db; }
+    .plan-event.excluded { opacity: .45; }
+    .review-timeline .plan-week-head, .review-timeline .plan-week-body { gap: 6px; }
+    .review-timeline .plan-day-head { background: #edf3ef; border-radius: 12px 12px 0 0; padding-top: 10px; min-height: 54px; }
+    .review-timeline .plan-day { background-color: #f3f7f4; border-left: 0; border-radius: 0 0 12px 12px; }
+    .review-timeline .plan-event { padding: 3px; line-height: 1.25; }
+    .review-timeline .plan-event.existing { background: #fff; border-left-color: #9aafa4; }
+    .review-timeline .plan-event.new { background: var(--mint); border-left-color: var(--green); }
+    .review-timeline .plan-event.fun { background: var(--blue); border-left-color: #8d9dce; }
+    .review-timeline .plan-event.downtime { background: #fbf2dd; border-left-color: #baaa83; }
+    .review-timeline .plan-event.tentative { background: #f8f2db; border-left-color: #c2a43b; }
+    .calendar-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 14px 0; color: var(--muted); font-size: 12px; }
+    .calendar-legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 3px; background: #9aafa4; }
+    .legend-dot.todo { background: var(--green); }
+    .legend-dot.fun { background: #8d9dce; }
+    .legend-dot.rest { background: #baaa83; }
+    .review-plan-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin-top: 12px; }
+    .review-plan-controls label { flex: 1 1 100px; max-width: 180px; font-size: 12px; color: var(--muted); }
+    .review-plan-controls select, .review-plan-controls input { width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 9px; padding: 6px; font-size: 13px; color: var(--ink); background: white; }
+    .plan-event time { display: block; color: #5e7184; font-size: 9px; }
+    .plan-event strong { display: block; margin-top: 1px; overflow-wrap: anywhere; font-size: 9px; line-height: 1.2; }
+    .scan-action { margin-top: 18px; }
+    .connection-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 14px; }
+    .connection-status { margin: 8px 0; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+    .connection-status.error { color: #a2382d; }
+    .plan-agenda { display: grid; gap: 8px; margin-top: 16px; }
+    .plan-day-details { border: 1px solid var(--line); border-radius: 12px; }
+    .plan-day-details summary { padding: 14px; color: var(--ink); font-size: 14px; font-weight: 650; cursor: pointer; }
+    .plan-day-details summary span { float: right; color: var(--muted); font-size: 12px; font-weight: 400; }
+    .plan-day-details[open] summary { border-bottom: 1px solid var(--line); }
+    .plan-day-plans { display: grid; gap: 8px; padding: 12px; }
+    .plan-day-plans > .helper { margin: 0; }
+    .plan-agenda-row { padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+    .plan-agenda-row strong { display: block; overflow-wrap: anywhere; }
+    .plan-agenda-row small { color: var(--muted); }
+    .plan-agenda-row.excluded { opacity: .6; }
+    .plan-agenda-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; }
+    .plan-day-head { min-width: 0; }
+    @media (max-width: 560px) {
+      .plan-week-head .plan-day-head { padding: 3px 0 6px; }
+      .plan-week-head .plan-day-head span { font-size: 8px; }
+      .plan-week-head .plan-day-head strong { font-size: 9px; }
+      .plan-event { font-size: 0; }
+      .plan-time-label { font-size: 8px; }
+    }
+    .list-tools { margin: 18px 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .activity-list { display: grid; gap: 8px; }
+    .schedule-prefs { margin: 22px 0 25px; padding: 17px; border-radius: 14px; background: #f3f7f4; }
+    .prefs-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .prefs-head strong { font-size: 14px; }
+    .prefs-head .helper { margin: 2px 0 0; }
+    .repeat-option { margin-top: 8px; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .repeat-option input { accent-color: var(--green); }
+    .quiet-times { margin-top: 13px; border-top: 1px solid #dfe8e3; padding-top: 11px; }
+    .quiet-times summary { color: var(--green-dark); font-size: 13px; font-weight: 650; cursor: pointer; }
+    .quiet-grid { display: grid; gap: 6px; margin-top: 11px; }
+    .quiet-row { display: grid; grid-template-columns: 65px 1fr 1fr; align-items: center; gap: 8px; font-size: 12px; }
+    .quiet-row input { min-height: 34px; padding: 0 6px; font-size: 12px; }
+    .quiet-row span { color: var(--muted); }
+    .quiet-labels { display: grid; grid-template-columns: 65px 1fr 1fr; gap: 8px; color: #84918b; font-size: 10px; }
+    .add-item-form { margin-top: 10px; padding-top: 12px; display: flex; gap: 9px; border-top: 1px solid #edf1ef; }
+    .add-item-form > input[type="text"] { flex: 1; min-width: 0; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    .activity-row { padding: 12px 13px; display: grid; grid-template-columns: minmax(0,1fr) 124px 91px; align-items: center; gap: 11px; border: 1px solid #e5ece8; border-radius: 13px; }
+    .activity-copy { min-width: 0; }
+    .activity-copy strong { display: block; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+    .activity-copy small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .activity-kind { color: var(--muted); text-align: right; font-size: 12px; }
+    .estimate-editor { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+    .estimate-editor summary { cursor: pointer; list-style: none; }
+    .estimate-editor summary::-webkit-details-marker { display: none; }
+    .estimate-form { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; padding-top: 10px; }
+    .estimate-form label { min-width: 0; }
+    .estimate-form input, .estimate-form select { min-width: 0; min-height: 38px; padding: 5px; font-size: 12px; }
+    .estimate-form .remember-estimate { grid-column: 1 / -1; display: flex; align-items: center; gap: 7px; }
+    .estimate-form input[type="checkbox"] { min-height: auto; }
+    .calendar-event.downtime { border-left-color: #baaa83; background: #fbf7ed; }
+    .activity-row { grid-template-columns: minmax(0,1fr) 55px auto; }
+    .item-help-line { margin-top: 9px; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .item-help-button { width: 24px; height: 24px; border: 1px solid #c6d6ce; border-radius: 50%; background: white; color: var(--green); font-size: 13px; font-weight: 700; }
+    dialog { max-width: 475px; width: calc(100% - 32px); max-height: 85vh; overflow-y: auto; padding: 26px; border: 1px solid var(--line); border-radius: 18px; color: var(--ink); box-shadow: var(--shadow); }
+    dialog::backdrop { background: rgba(30,52,48,.32); }
+    dialog p, dialog li { font-size: 14px; }
+    dialog ul { padding-left: 20px; }
+    dialog li { margin: 5px 0; }
+    .unplaced { margin-top: 15px; padding: 12px 15px; border-radius: 12px; background: var(--amber); font-size: 13px; }
+    .unplaced p { margin: 5px 0 0; }
+    .activity-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+    .activity-row select { min-height: 36px; padding: 0 8px; font-size: 13px; }
+    .duration { color: var(--muted); font-size: 13px; text-align: right; }
+    .category-dot { width: 8px; height: 8px; display: inline-block; margin-right: 7px; border-radius: 50%; background: #5b9b83; vertical-align: 1px; }
+    .category-dot.fun { background: #8d9dce; }
+    .idea-box { margin-top: 16px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 13px; background: #f2f5fa; }
+    .idea-box p { margin: 0; color: #65718c; font-size: 13px; }
+    .goal-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 5px; margin: 20px 0 18px; border-radius: 13px; background: #f1f5f2; }
+    .goal-switch button { min-height: 41px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-weight: 600; }
+    .goal-switch button.active { background: white; color: var(--ink); box-shadow: 0 1px 5px rgba(30,52,48,.08); }
+    .goal-fields { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .goal-fields .field-label { font-size: 12px; }
+    .reward-field { margin-top: 17px; }
+    .goal-summary { margin-top: 17px; padding: 14px 16px; border-left: 3px solid var(--lime); border-radius: 4px 11px 11px 4px; background: #f6f9ee; }
+    .goal-summary small { display: block; color: var(--muted); }
+    .goal-summary strong { font-size: 15px; }
+    .calendar-toggle { width: fit-content; padding: 4px; display: flex; gap: 3px; margin: 20px 0 12px; border-radius: 11px; background: #eff4f1; }
+    .calendar-toggle button { min-height: 36px; padding: 0 15px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-weight: 600; }
+    .calendar-toggle button.active { background: white; color: var(--ink); box-shadow: 0 1px 5px rgba(30,52,48,.08); }
+    .week-scroll { overflow-x: auto; padding-bottom: 8px; }
+    .week-calendar { min-width: 820px; display: grid; grid-template-columns: repeat(7, minmax(105px,1fr)); gap: 7px; }
+    .day-column { min-height: 210px; padding: 9px 7px; border-radius: 11px; background: #f3f7f4; }
+    .day-heading { padding: 2px 3px 7px; border-bottom: 1px solid #dfe8e3; }
+    .day-heading strong { display: block; font-size: 12px; }
+    .day-heading span { color: var(--muted); font-size: 10px; }
+    .calendar-event { margin-top: 7px; padding: 7px; border-left: 3px solid #aabbb3; border-radius: 7px; background: white; font-size: 10px; }
+    .calendar-event.new { border-left-color: var(--green); }
+    .calendar-event.fun { border-left-color: #8d9dce; }
+    .calendar-event.tentative { border-left-color: #c6a93c; }
+    .calendar-event .event-time { display: block; margin-bottom: 3px; color: #71817b; font-size: 10px; }
+    .calendar-event strong { display: block; line-height: 1.3; overflow-wrap: anywhere; }
+    .calendar-event small { display: block; margin-top: 3px; color: var(--muted); }
+    .event-controls { display: grid; grid-template-columns: minmax(0,1fr) 62px; gap: 4px; margin-top: 6px; }
+    .event-controls.daily { grid-template-columns: 1fr; }
+    .event-controls select, .event-controls input { min-width: 0; min-height: 29px; padding: 0 4px; border-radius: 6px; font-size: 10px; }
+    .remove-event { float: right; border: 0; background: transparent; color: #8a7169; font-size: 14px; line-height: 1; }
+    .schedule-list { display: grid; gap: 8px; }
+    .schedule-edit-row { padding: 10px 11px; display: grid; grid-template-columns: minmax(0,1fr) 118px 77px 25px; align-items: center; gap: 7px; border: 1px solid #e2eae6; border-radius: 11px; }
+    .schedule-edit-row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; }
+    .schedule-edit-row select, .schedule-edit-row input { min-height: 34px; padding: 0 7px; font-size: 12px; }
+    .summary-success { padding: 18px; display: flex; align-items: flex-start; gap: 13px; border-radius: 14px; background: var(--mint); }
+    .success-mark { width: 29px; height: 29px; flex: 0 0 29px; display: grid; place-items: center; border-radius: 50%; background: var(--green); color: white; font-weight: 800; }
+    .summary-success p { margin: 3px 0 0; color: #526760; font-size: 14px; }
+    .bottom-note { margin-top: 22px; color: #84918b; font-size: 12px; }
+    .toast { position: fixed; bottom: 22px; left: 50%; transform: translate(-50%, 18px); opacity: 0; padding: 12px 17px; border-radius: 11px; background: var(--ink); color: white; box-shadow: var(--shadow); font-size: 14px; pointer-events: none; transition: opacity .2s, transform .2s; }
+    .toast.show { transform: translate(-50%,0); opacity: 1; }
+    @media (max-width: 820px) {
+      .workspace { grid-template-columns: 1fr; gap: 17px; }
+      .side-note { display: none; }
+      .shell { padding-top: 25px; }
+      .main-panel { padding: 26px 22px; }
+      .steps { justify-content: space-between; }
+      .step { gap: 5px; font-size: 11px; }
+      .step-line { margin: 0 6px; }
+    }
+    @media (max-width: 560px) {
+      .topbar { height: 62px; padding: 0 18px; }
+      .shell { padding: 25px 15px 48px; }
+      .welcome { margin-top: 25px; }
+      .steps-wrap { margin-bottom: 25px; }
+      .step { flex-direction: column; gap: 3px; font-size: 9px; }
+      .step-line { align-self: flex-start; margin-top: 11px; }
+      .main-panel { padding: 23px 17px; border-radius: 17px; }
+      .choice-grid { grid-template-columns: 1fr; }
+      .choice { min-height: 75px; }
+      .source-grid { grid-template-columns: 1fr; }
+      .source-option { display: flex; align-items: center; justify-content: space-between; }
+      .activity-row { grid-template-columns: minmax(0,1fr) 45px auto; gap: 6px; }
+      .add-item-form { flex-wrap: wrap; }
+      .add-item-form > input[type="text"] { flex: 1 1 120px; }
+      .add-item-form .repeat-option { flex-basis: 100%; margin-top: 0; }
+      .quiet-row { grid-template-columns: 46px minmax(0,1fr) minmax(0,1fr); gap: 5px; }
+      .quiet-labels { grid-template-columns: 46px minmax(0,1fr) minmax(0,1fr); gap: 5px; }
+      .duration { grid-column: 1 / -1; text-align: left; margin-top: -5px; }
+      .goal-fields { grid-template-columns: 1fr 1fr; }
+      .goal-fields .field:last-child { grid-column: 1 / -1; }
+      .schedule-edit-row { grid-template-columns: minmax(0,1fr) 102px 68px 22px; gap: 5px; padding: 9px 7px; }
+      .schedule-edit-row .name { font-size: 12px; }
+      .action-row { align-items: stretch; }
+      .action-row .button { flex: 1; }
+      .week-stamp { align-items: flex-start; flex-direction: column; gap: 4px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">S</span><span>Sunday</span></div>
+    <span class="demo-tag">Your week, with room to breathe</span>
+  </header>
+  <main class="shell" id="app" aria-live="polite"></main>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="planner.js"></script>
+  <script src="config.js"></script>
+  <script src="google-calendar.js"></script>
+  <script>
+    const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const weekStart = new Date();
+    weekStart.setHours(0,0,0,0);
+    weekStart.setDate(weekStart.getDate() + ((8 - weekStart.getDay()) % 7 || 7));
+    const dates = weekDays.map((_,i) => { const d=new Date(weekStart); d.setDate(d.getDate()+i); return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); });
+    const weekLabel = `${dates[0]} – ${dates[6]}, ${weekStart.getFullYear()}`;
+    const steps = ["Calendar", "Plans", "Your list", "Goal", "Review"];
+    const state = {
+      page: -1,
+      completed: new Set(),
+      calendars: [],
+      scans: [],
+      scanned: false,
+      imported: [],
+      openPlanDay: null,
+      googleReady: false, googleBusy: false, scanBusy: false, googleMessage: "", googleError: false,
+      planDays: [0,1,2,3,4,5,6],
+      quietTimes: weekDays.map(()=>({start:"",end:""})),
+      sharedLearningAvailable: false,
+      downtimeMinutes: 30,
+      downtime: [],
+      items: [
+        { title: "Finish project proposal", type: "To-do", duration: "90 min", day: null, time: "17:30", repeatDaily: false },
+        { title: "Try a new ramen place", type: "Fun", duration: "90 min", day: null, time: "17:30", repeatDaily: false },
+        { title: "Call Mom", type: "To-do", duration: "20 min", day: null, time: "17:30", repeatDaily: false },
+        { title: "Take a long walk", type: "Fun", duration: "45 min", day: null, time: "17:30", repeatDaily: false },
+        { title: "Pay electricity bill", type: "To-do", duration: "30 min", day: null, time: "17:30", repeatDaily: false }
+      ],
+      editingIndex: null,
+      itemDraft: "",
+      goalMode: "tasks",
+      direction: "at least",
+      goalAmount: 3,
+      goalFocus: "selected tasks",
+      selectedTasks: [],
+      selectedTasksInitialized: false,
+      reviewMode: "after",
+      openReviewDay: null,
+      reward: "A slow Sunday morning",
+      published: false
+    };
+    state.items = state.items.map(item => Planner.parse(item.title));
+    state.unplaced = [];
+
+    function shell(content, page = state.page) {
+      const app = document.getElementById("app");
+      if (page < 0) { app.innerHTML = content; return; }
+      const progress = `<div class="steps-wrap"><div class="steps">${steps.map((s, i) => {
+        const completed = state.completed.has(i);
+        const content = `<span class="dot">${completed ? "✓" : i + 1}</span><span>${s}</span>`;
+        const step = i === page
+          ? `<div class="step active" aria-current="step">${content}</div>`
+          : completed
+            ? `<div class="step done"><button type="button" data-action="goStep" data-id="${i}" aria-label="Return to completed step: ${s}">${content}</button></div>`
+            : `<div class="step">${content}</div>`;
+        return `${step}${i < steps.length - 1 ? '<span class="step-line"></span>' : ""}`;
+      }).join("")}</div></div>`;
+      const side = `<aside class="side-note"><div class="tiny-title">Your week</div><p>A little structure for the things you need to do and the things you want to do.</p><div class="mini-week">${weekDays.map((d,i)=>`<div class="mini-day">${d}<b>${dates[i].split(" ")[1]}</b></div>`).join("")}</div></aside>`;
+      app.innerHTML = `${progress}<div class="workspace">${side}<section class="main-panel">${content}</section></div>`;
+      app.querySelectorAll("[data-action]").forEach(el => el.addEventListener("click", actions[el.dataset.action]));
+      bindInputs();
+    }
+    function advanceTo(page) {
+      if (state.page >= 0 && state.page < steps.length) state.completed.add(state.page);
+      state.page = page;
+      render();
+    }
+    function canBuildWeek() { return state.items.length > 0; }
+    function navButtons(back, next, nextText = "Continue") {
+      return `<div class="action-row">${back ? `<button class="button secondary" data-action="back">Back</button>` : ""}<button class="button" data-action="${next}" ${next === "toReview" && !canBuildWeek() ? "disabled" : ""}>${nextText}</button></div>`;
+    }
+    function render() {
+      if (state.page < 0) return renderWelcome();
+      if (state.page === 0) return renderCalendar();
+      if (state.page === 1) return renderPlans();
+      if (state.page === 2) return renderList();
+      if (state.page === 3) return renderGoal();
+      if (state.page === 4) return renderReview();
+      return renderSuccess();
+    }
+    function renderWelcome() {
+      document.getElementById("app").innerHTML = `<section class="welcome">
+        <div class="welcome-mark" aria-hidden="true">☀</div>
+        <div class="panel-kicker">A little Sunday reset</div>
+        <h1>Make room for your week.</h1>
+        <p class="lede">Bring your plans, to-dos, and things you’re looking forward to into one week that feels like yours.</p>
+        <div class="week-stamp"><div><small>Planning for</small><strong>${weekLabel}</strong></div><small>About 5 minutes</small></div>
+        <button class="button" data-action="start">Plan this week</button>
+        <p class="bottom-note">You’ll review everything before it goes on your calendar.</p>
+      </section>`;
+      document.querySelector('[data-action="start"]').addEventListener("click", actions.start);
+    }
+    function renderCalendar() {
+      shell(`<div class="panel-kicker">First, your calendar</div><h2>Where should your plans live?</h2>
+        <p class="panel-intro">Connect Google Calendar to read your existing plans. You can also skip this step.</p>
+        <div class="choice-grid">
+          ${calendarChoice("google", "G", "Google Calendar", GoogleCalendar.connected() ? "Connected · primary calendar" : "Read existing plans from your primary calendar")}
+        </div>
+        ${googleConnectionMarkup()}
+        <p class="helper">Calendar access is read only. Apple Calendar is coming later.</p>
+        ${navButtons(null, "toPlans", state.calendars.length ? "Continue" : "Skip for now")}`, 0);
+    }
+    function calendarChoice(id, mark, name, desc) {
+      const selected = state.calendars.includes(id);
+      return `<button class="choice ${selected ? "selected" : ""}" data-action="calendar" data-id="${id}" aria-pressed="${selected}">
+        <span class="choice-icon">${mark}</span><span class="choice-copy"><strong>${name}</strong><small>${desc}</small></span><span class="check">✓</span></button>`;
+    }
+    function googleConnectionMarkup() {
+      return `<div class="connection-row"><button class="button small secondary" data-action="${GoogleCalendar.connected()?'disconnectGoogle':'connectGoogle'}" ${state.googleBusy?'disabled':''}>${state.googleBusy?'Connecting…':GoogleCalendar.connected()?'Disconnect Google Calendar':'Connect Google Calendar'}</button></div><p class="connection-status ${state.googleError?'error':''}" role="status">${escapeHtml(state.googleMessage || (GoogleCalendar.connected()?'Connected to your primary Google calendar.':'Connect Google Calendar to check existing plans.'))}</p>`;
+    }
+    async function connectGoogle() {
+      if(state.googleBusy || state.scanBusy) return;
+      if(!state.googleReady) {
+        state.googleBusy=true;state.googleError=false;state.googleMessage='Preparing Google sign-in…';render();
+        try {await GoogleCalendar.prepare();state.googleReady=true;state.googleMessage='Google is ready. Click Connect Google Calendar to sign in.';}
+        catch(error){state.googleError=true;state.googleMessage=error.message;}
+        state.googleBusy=false;render();return;
+      }
+      // Open the popup synchronously in this click, before rendering or awaiting.
+      const connection=GoogleCalendar.connect();
+      state.googleBusy=true;state.googleError=false;render();
+      try {await connection;state.calendars=['google'];state.googleMessage='Connected. Select days, then check for existing plans.';}
+      catch(error){state.googleError=true;state.googleMessage=error.message;}
+      state.googleBusy=false;render();
+    }
+    async function scanGoogle() {
+      if(state.scanBusy) return;
+      if(!state.scans.length){toast('Select at least one day to check.');return;}
+      if(!GoogleCalendar.connected()){state.googleMessage='Connect Google Calendar first, then check selected days.';state.googleError=true;renderPlans();return;}
+      const selected=[...state.scans];state.scanBusy=true;state.googleError=false;state.googleMessage='Checking your primary Google calendar…';renderPlans();
+      try {
+        const plans=await GoogleCalendar.readWeek(weekStart,selected);
+        const previous=new Map(state.imported.filter(x=>x.source==='google').map(x=>[x.googleId,x]));
+        state.imported=state.imported.filter(x=>x.source!=='google'||!selected.includes(x.day));
+        state.imported.push(...plans.map(plan=>{const old=previous.get(plan.googleId);return old?{...plan,keep:old.keep,tentative:old.tentative}:plan;}));
+        state.scanned=true;state.googleMessage=`Checked ${selected.length} days. Found ${plans.length} plan${plans.length===1?'':'s'}.`;
+      } catch(error){state.googleError=true;state.googleMessage=error.message;}
+      state.scanBusy=false;renderPlans();
+    }
+    function renderPlans() {
+      shell(`<div class="panel-kicker">Plans already in the week</div><h2>Anything else already planned?</h2>
+        <p class="panel-intro">Check your calendar for existing plans, then review your week below.</p>
+        <div class="source-scan"><strong>Which days should we check?</strong><p class="helper" style="margin:2px 0 0">${weekLabel} · choose a few days or the full week.</p>
+          ${googleConnectionMarkup()}
+          <button class="button small secondary" style="margin-top:8px" data-action="selectAllPlanDays">Select all days</button>
+          <div class="day-checks">${weekDays.map((d,i)=>`<button class="day-pill ${state.scans.includes(i)?'checked':''}" data-action="day" data-id="${i}" aria-pressed="${state.scans.includes(i)}" ${state.scanBusy?'disabled':''}>${d} ${dates[i].split(' ')[1]}</button>`).join('')}</div>
+          <div class="scan-action"><button class="button small" data-action="scan" ${state.scanBusy?'disabled':''}>${state.scanBusy?'Checking…':state.scanned?'Check again':'Check selected days'}</button></div>
+        </div>
+        <div class="plan-section"><h3>Review Plans</h3><p class="helper">${weekLabel} · ${escapeHtml(Intl.DateTimeFormat().resolvedOptions().timeZone)}</p>
+          ${planCalendarMarkup()}
+          <p class="helper">Select a calendar block or expand a day below to review its plans.</p>
+          ${planAgendaMarkup()}
+        </div>${navButtons('back','toList')}`,1);
+      document.querySelectorAll('.plan-day-details').forEach(group=>group.addEventListener('toggle',()=>{
+        const day=+group.dataset.day;
+        if(group.open)state.openPlanDay=day;
+        else if(state.openPlanDay===day)state.openPlanDay=null;
+      }));
+    }
+    function planAgendaMarkup() {
+      const fullDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      return `<div class="plan-agenda" aria-label="Plans by day">${fullDays.map((day,dayIndex)=>{
+        const plans=state.imported.map((plan,i)=>({plan,i})).filter(({plan})=>plan.day===dayIndex).sort((a,b)=>Number(!!b.plan.allDay)-Number(!!a.plan.allDay)||a.plan.time.localeCompare(b.plan.time));
+        return `<details class="plan-day-details" name="plan-days" data-day="${dayIndex}" ${state.openPlanDay===dayIndex?'open':''}><summary>${day} · ${dates[dayIndex]}<span>${plans.length} plan${plans.length===1?'':'s'}</span></summary><div class="plan-day-plans">${plans.map(({plan,i})=>`<article class="plan-agenda-row ${plan.keep?'':'excluded'}" id="plan-row-${i}" tabindex="-1"><strong>${escapeHtml(plan.title)}</strong><small>${plan.allDay?'All day':formatClock(plan.time)+' · '+plan.durationMinutes+' min'} · ${plan.source==='google'?'Google Calendar':'Added by you'}${plan.tentative?' · Tentative':''}${!plan.keep?' · Excluded':''}</small><div class="plan-agenda-actions"><button class="text-button" data-action="togglePlanKeep" data-id="${i}">${plan.keep?'Exclude':'Restore'}</button><button class="text-button" data-action="planTentative" data-id="${i}">${plan.tentative?'Mark confirmed':'Mark tentative'}</button></div></article>`).join('')||'<p class="helper">No plans for this day.</p>'}</div></details>`;
+      }).join('')}</div>`;
+    }
+    function planCalendarMarkup() {
+      return weekCalendarMarkup(state.imported.map((event,index)=>({...event,id:String(index)})));
+    }
+    function weekCalendarMarkup(events,{separated=false,action='focusPlan'}={}) {
+      const header=`<div class="plan-week-head"><div></div>${weekDays.map((day,i)=>`<div class="plan-day-head"><strong>${day}</strong><span>${dates[i]}</span></div>`).join('')}</div>`;
+      const axis=`<div class="plan-time-axis">${Array.from({length:24},(_,hour)=>`<div class="plan-time-label">${hour%2===0?formatAxisHour(hour):''}</div>`).join('')}</div>`;
+      const minutes=p=>+p.time.slice(0,2)*60 + +p.time.slice(3,5);
+      const days=weekDays.map((day,dayIndex)=>{
+        const entries=events.filter(p=>p.day===dayIndex);
+        const sorted=[...entries].sort((a,b)=>minutes(a)-minutes(b)),ends=[],lanes=new Map();
+        for(const p of sorted){let lane=ends.findIndex(end=>end<=minutes(p));if(lane<0)lane=ends.length;ends[lane]=minutes(p)+(p.durationMinutes||60);lanes.set(p,lane);}
+        return `<div class="plan-day" aria-label="${day} ${dates[dayIndex]}">${entries.map(p=>{
+          const top=minutes(p)/1440*100,height=Math.min(100-top,(p.durationMinutes||60)/1440*100),width=100/Math.max(1,ends.length);
+          const label=`${p.title}, ${day}, ${p.allDay?'all day':formatClock(p.time)}, ${p.durationMinutes||60} minutes${p.tentative?', tentative':''}${p.keep===false?', excluded':''}. Show details.`;
+          return `<button class="plan-event ${p.kind||''} ${p.type==='Fun'?'fun':''} ${p.tentative?'tentative':''} ${p.keep===false?'excluded':''}" style="top:${top}%;height:${height}%;left:calc(${lanes.get(p)*width}% + 1px);width:calc(${width}% - 2px)" data-action="${action}" data-id="${p.id}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${escapeHtml(p.title)}</button>`;
+        }).join('')}</div>`;
+      }).join('');
+      return `<div class="plan-week-scroll ${separated?'review-timeline':''}"><div class="plan-week">${header}<div class="plan-week-body">${axis}${days}</div></div></div>`;
+    }
+    function formatAxisHour(hour) { return `${hour%12||12} ${hour<12?"AM":"PM"}`; }
+    function formatClock(time) { const [hour,minute]=time.split(":").map(Number);return `${hour%12||12}:${String(minute).padStart(2,"0")} ${hour<12?"AM":"PM"}`; }
+    function estimateControlsMarkup(item,i) {
+      return `<details class="estimate-editor"><summary class="button small secondary">Adjust estimates</summary><form class="estimate-form" data-estimate="${i}"><label>Activity type<select name="type" aria-label="Activity type for ${escapeHtml(item.title)}"><option ${item.type==='To-do'?'selected':''}>To-do</option><option ${item.type==='Fun'?'selected':''}>Fun</option></select></label><label>Activity minutes<input name="duration" aria-label="Activity minutes for ${escapeHtml(item.title)}" type="number" min="5" max="1440" step="1" value="${item.durationMinutes}" required></label><label>Travel each way (min)<input name="travel" aria-label="Travel each way for ${escapeHtml(item.title)}" type="number" min="0" max="180" step="1" value="${item.travelMinutes||0}" required></label><label class="remember-estimate"><input name="contribute" type="checkbox" ${item.family&&state.sharedLearningAvailable?"checked":"disabled"}>Improve shared estimates with this correction</label><p class="helper" style="grid-column:1/-1;margin:0">${!item.family?"This activity stays in your draft because it has no matching shared activity family.":!state.sharedLearningAvailable?"Shared learning is unavailable. Open the local server to contribute.":"Only an activity family, Fun/To-do category, and rounded activity/travel minutes are sent. No event title or account details."}</p><button class="button small secondary" type="submit">Save estimate</button></form></details>`;
+    }
+    function renderList() {
+      const currentInput=document.getElementById("new-item");
+      if(currentInput) state.itemDraft=currentInput.value;
+      shell(`<div class="panel-kicker">Sort it out</div><h2>What would you like in this week?</h2>
+        <p class="panel-intro">Say what you want to do and how often. Include days, times, or other details if they matter. We’ll work out the schedule.</p>
+        <div class="schedule-prefs"><div class="prefs-head"><div><strong>Days to schedule</strong><p class="helper">${state.planDays.length} of 7 days selected for one-time activities.</p></div><button class="text-button" data-action="selectAllDays">Select all</button></div>
+          <div class="day-checks">${weekDays.map((d,i)=>`<button class="day-pill ${state.planDays.includes(i) ? "checked" : ""}" data-action="planDay" data-id="${i}" aria-pressed="${state.planDays.includes(i)}">${d}</button>`).join("")}</div>
+          <details class="quiet-times"><summary>Set times to leave open</summary><p class="helper">Choose one window per day when nothing should be scheduled.</p><div class="quiet-labels"><span></span><span>Leave open from</span><span>Until</span></div><div class="quiet-grid">${weekDays.map((d,i)=>`<label class="quiet-row"><strong>${d}</strong><input type="time" value="${state.quietTimes[i].start}" data-quiet-day="${i}" data-quiet-part="start" aria-label="${d}: leave open from"><input type="time" value="${state.quietTimes[i].end}" data-quiet-day="${i}" data-quiet-part="end" aria-label="${d}: leave open until"></label>`).join("")}</div></details>
+        </div>
+        <div class="schedule-prefs"><strong>A balanced week</strong><p class="helper">Aim for 1 fun activity and 2 to-dos per day, spread across the week. Fixed plans, available time, and your list may change that balance.</p><label class="field-label" style="margin-top:12px" for="downtime-minutes">Downtime per selected day (minutes)</label><input id="downtime-minutes" type="number" min="0" max="120" step="5" value="${state.downtimeMinutes}"><p class="helper">We’ll protect this time where it fits, preferably in the evening. Set 0 to turn it off. Travel is reserved before and after outings; estimates aren’t based on directions.</p></div>
+        <div class="list-tools" style="margin-top:24px"><strong>Your list</strong><span class="helper" style="margin:0">Review and adjust estimates.</span></div>
+        <div class="activity-list">${state.items.length ? state.items.map((item,i)=>`<div class="activity-row"><div class="activity-copy"><strong><span class="category-dot ${item.type === "Fun" ? "fun" : ""}"></span>${escapeHtml(item.raw)}</strong><small>${escapeHtml(item.summary)} · ${escapeHtml(item.duration)} activity · ${item.travelMinutes||0} min travel each way · ${escapeHtml(item.estimateSource)}${item.notice ? " · " + escapeHtml(item.notice) : ""}</small></div><span class="activity-kind">${item.type}</span><button class="button small secondary" data-action="editItem" data-id="${i}">Edit</button>${estimateControlsMarkup(item,i)}</div>`).join("") : `<p class="helper">Add an activity below to start your list.</p>`}</div>
+        <form class="add-item-form" id="add-item-form"><label class="sr-only" for="new-item">What and when?</label><input id="new-item" type="text" value="${escapeHtml(state.itemDraft)}" placeholder="What and when?" autocomplete="off" aria-describedby="item-help-hint"><button class="button small" type="submit">${state.editingIndex===null?"Add item":"Save item"}</button></form>
+        <div class="item-help-line"><button class="item-help-button" data-action="itemHelp" aria-label="Help with what and when" aria-haspopup="dialog">?</button><span id="item-help-hint">Write it the way you’d say it.</span></div>
+        <dialog id="item-help" aria-labelledby="item-help-title"><h3 id="item-help-title">Just tell us what and when.</h3><p>Write one activity and how often you want to do it, then press Enter. Keep going with your next idea.</p><ul><li>“Play Zelda daily”</li><li>“Every other day, play pickleball”</li><li>“Read for 20 minutes every evening”</li><li>“Finish the proposal by Friday”</li><li>“Swim three times this week, travel 15 minutes each way”</li><li>“Call Mom on Sunday at 3 pm”</li></ul><p>We’ll estimate the activity type, duration, and travel buffers, and use the timing you give us. Use Adjust estimates to correct them; optional contributions improve shared suggestions for recognized activity families without sending titles. You can add details like “quick,” “after work,” or “except Sunday.” Leave out the timing and we’ll find an opening.</p><p class="helper">Daily means all seven days. Every other day starts on Monday unless you say “starting Tuesday,” for example. This prototype understands common phrases; check the interpretation under each item. Unavailable slots stay unscheduled.</p><form method="dialog"><button class="button small">Got it</button></form></dialog>
+        <div class="idea-box"><p><strong>Want one more idea?</strong><br>We’ll use your list to suggest something that fits.</p><button class="button small secondary" data-action="idea">Suggest an idea</button></div>
+        ${navButtons("back", "toGoal", "Set a goal")}`, 2);
+      document.getElementById("add-item-form").addEventListener("submit", e => {e.preventDefault();addItem(document.getElementById("new-item").value);});
+      document.getElementById("new-item").addEventListener("input",e=>{state.itemDraft=e.target.value;});
+      document.getElementById('downtime-minutes').addEventListener('change',e=>{state.downtimeMinutes=Math.max(0,Math.min(120,Number(e.target.value)||0));e.target.value=state.downtimeMinutes;resetGeneratedSchedule();});
+      document.querySelectorAll('[data-estimate]').forEach(form=>form.addEventListener('submit',async e=>{
+        e.preventDefault();const item=state.items[+form.dataset.estimate],fields=form.elements;
+        const changed=Planner.calibrate(item,{type:fields.type.value,durationMinutes:fields.duration.value,travelMinutes:fields.travel.value});
+        const contribution=changed&&fields.contribute.checked?Planner.feedback(item):null;
+        state.selectedTasks=state.selectedTasks.filter(title=>title!==item.title);
+        if(item.type==='To-do'&&state.selectedTasksInitialized)state.selectedTasks.push(item.title);
+        resetGeneratedSchedule();renderList();toast('Estimate updated.');
+        if(contribution){
+          try{
+            const response=await fetch('/api/estimate-feedback',{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json'},body:JSON.stringify(contribution),signal:AbortSignal.timeout(5000)});
+            if(!response.ok)throw Error('Contribution unavailable');
+            const result=await response.json();Planner.setModel(result.model);toast('Estimate updated and shared learning improved.');
+          }catch{toast('Estimate updated. Shared learning is unavailable; nothing was queued.');}
+        }
+      }));
+      document.querySelectorAll("[data-quiet-day]").forEach(el=>el.addEventListener("change",e=>{const day=+e.target.dataset.quietDay;state.quietTimes[day][e.target.dataset.quietPart]=e.target.value;resetGeneratedSchedule();}));
+    }
+    function addItem(value) {
+      const title = value.trim();
+      if (!title) { document.getElementById("new-item")?.focus(); return; }
+      const item = Planner.parse(title);
+      if (state.editingIndex !== null) {
+        const previous=state.items[state.editingIndex];
+        state.selectedTasks=state.selectedTasks.filter(name=>name!==previous.title);
+        state.items[state.editingIndex]=item;
+        state.editingIndex=null;
+      } else state.items.push(item);
+      if (item.type === "To-do" && state.selectedTasksInitialized) state.selectedTasks.push(item.title);
+      state.itemDraft="";
+      const field=document.getElementById("new-item");
+      if(field) field.value="";
+      renderList();
+      document.getElementById("new-item")?.focus();
+    }
+    function resetGeneratedSchedule() {
+      state.items.forEach(item=>{item.occurrences=[];item.overrides={};});
+    }
+    function renderGoal() {
+      const isTasks = state.goalMode === "tasks";
+      const toDos = state.items.filter(x=>x.type === "To-do");
+      if (!state.selectedTasksInitialized) {
+        state.selectedTasks = toDos.map(x=>x.title);
+        state.selectedTasksInitialized = true;
+      }
+      shell(`<div class="panel-kicker">A goal for this week</div><h2>What would feel good to accomplish?</h2>
+        <p class="panel-intro">Choose a goal that fits this week. It can be about finishing tasks or spending more or less time on an activity.</p>
+        <div class="goal-switch"><button class="${isTasks ? "active" : ""}" data-action="goalMode" data-id="tasks">Complete tasks</button><button class="${!isTasks ? "active" : ""}" data-action="goalMode" data-id="time">Log time</button></div>
+        <div class="goal-fields">
+          <div class="field"><label class="field-label" for="direction">Aim for</label><select id="direction"><option ${state.direction === "at least" ? "selected" : ""}>at least</option><option ${state.direction === "no more than" ? "selected" : ""}>no more than</option></select></div>
+          <div class="field"><label class="field-label" for="amount">${isTasks ? "Number of tasks" : "Hours"}</label><input id="amount" type="number" min="1" max="40" value="${state.goalAmount}"></div>
+          <div class="field"><label class="field-label" for="focus">${isTasks ? "From" : "For"}</label>${isTasks ? `<select id="focus"><option ${state.goalFocus === "selected tasks" ? "selected" : ""}>selected tasks</option><option ${state.goalFocus === "all to-dos" ? "selected" : ""}>all to-dos</option></select>` : `<input id="focus" type="text" value="${escapeHtml(state.goalFocus)}" placeholder="e.g. phone use, sleep, reading">`}</div>
+        </div>
+        ${!isTasks ? `<p class="helper">This can be separate from your list, like lowering phone use.</p>` : ""}
+        ${isTasks && state.goalFocus === "selected tasks" ? `<div style="margin-top:16px"><span class="field-label">Tasks that count</span><div class="activity-list">${toDos.map((x,i)=>`<label class="found-item"><input type="checkbox" data-task-index="${i}" ${state.selectedTasks.includes(x.title) ? "checked" : ""}><span>${escapeHtml(x.title)}</span></label>`).join("") || `<p class="helper">Add a to-do to choose tasks for your goal.</p>`}</div></div>` : ""}
+        <div class="reward-field"><label class="field-label" for="reward">And your reward?</label><input id="reward" type="text" value="${escapeHtml(state.reward)}" placeholder="Something you’ll look forward to"></div>
+        <div class="goal-summary"><small>Your goal</small><strong id="goal-summary-text"></strong></div>
+        <p class="bottom-note">Coming later: share this goal with an accountability buddy.</p>
+        ${navButtons("back", "toReview", "Build my week")}`, 3);
+      updateGoalSummary();
+      document.querySelectorAll("[data-task-index]").forEach(el=>el.addEventListener("change",e=>{const task=toDos[+e.target.dataset.taskIndex].title;state.selectedTasks=e.target.checked?[...new Set([...state.selectedTasks,task])]:state.selectedTasks.filter(x=>x!==task);state.goalAmount=Math.min(state.goalAmount,Math.max(1,state.selectedTasks.length));renderGoal();}));
+    }
+    function updateGoalSummary() {
+      const summary = document.getElementById("goal-summary-text"); if (!summary) return;
+      const mode = state.goalMode === "tasks" ? "tasks" : "hours";
+      summary.textContent = `${state.direction} ${state.goalAmount} ${mode} ${state.goalFocus} · reward: ${state.reward || "choose a reward"}`;
+    }
+    function bindInputs() {
+      document.getElementById("direction")?.addEventListener("change",e=>{state.direction=e.target.value;updateGoalSummary();});
+      document.getElementById("amount")?.addEventListener("input",e=>{state.goalAmount=Math.max(1,+e.target.value||1);updateGoalSummary();});
+      document.getElementById("focus")?.addEventListener("input",e=>{state.goalFocus=e.target.value;updateGoalSummary();});
+      document.getElementById("reward")?.addEventListener("input",e=>{state.reward=e.target.value;updateGoalSummary();});
+    }
+    function allocate() {
+      state.unplaced = Planner.schedule(state.items,state.planDays,state.quietTimes,state.imported,{downtimeMinutes:state.downtimeMinutes,downtime:state.downtime});
+    }
+    function reviewEvents() {
+      const events=state.imported.map((event,index)=>({...event,id:`existing-${index}`,kind:'existing',index}));
+      if(state.reviewMode==='before')return events;
+      state.items.forEach((item,index)=>item.occurrences.forEach(occurrence=>events.push({
+        id:`new-${index}-${occurrence.occurrenceIndex}`,kind:'new',index,occurrenceIndex:occurrence.occurrenceIndex,
+        title:item.title,day:occurrence.day,time:occurrence.time,durationMinutes:item.durationMinutes,type:item.type,travelMinutes:item.travelMinutes,keep:true
+      })));
+      events.push(...state.downtime.map(block=>({...block,id:`downtime-${block.day}`,kind:'downtime',keep:true})));
+      return events;
+    }
+    function reviewAgendaMarkup(events) {
+      const fullDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      return `<div class="plan-agenda" aria-label="Review plans by day">${fullDays.map((day,dayIndex)=>{
+        const entries=events.filter(event=>event.day===dayIndex).sort((a,b)=>Number(!!b.allDay)-Number(!!a.allDay)||a.time.localeCompare(b.time));
+        const count=entries.filter(event=>event.kind!=='downtime').length;
+        return `<details class="plan-day-details review-day-details" name="review-days" data-day="${dayIndex}" ${state.openReviewDay===dayIndex?'open':''}><summary>${day} · ${dates[dayIndex]}<span>${count} plan${count===1?'':'s'}</span></summary><div class="plan-day-plans">${entries.map(event=>{
+          let controls='';
+          if(event.kind==='existing')controls=`<div class="plan-agenda-actions"><button class="button small secondary" data-action="togglePlanKeep" data-id="${event.index}">${event.keep?'Exclude':'Restore'}</button><button class="button small secondary" data-action="planTentative" data-id="${event.index}">${event.tentative?'Mark confirmed':'Mark tentative'}</button></div>`;
+          if(event.kind==='new'){
+            const key=`${event.index}:${event.occurrenceIndex}`;
+            controls=`<div class="review-plan-controls"><label>Day<select data-occ-day="${key}" aria-label="Day for ${escapeHtml(event.title)}">${weekDays.map((d,n)=>`<option value="${n}" ${event.day===n?'selected':''}>${d}</option>`).join('')}</select></label><label>Start time<input type="time" value="${event.time}" data-occ-time="${key}" aria-label="Time for ${escapeHtml(event.title)}"></label><button class="button small secondary" data-action="removeItem" data-id="${event.index}" aria-label="Remove ${escapeHtml(event.title)} and its repetitions">Remove activity</button></div>`;
+          }
+          const category=event.kind==='existing'?'Existing plan':event.kind==='downtime'?'Protected rest':event.type;
+          return `<article class="plan-agenda-row ${event.keep===false?'excluded':''}" id="review-row-${event.id}" tabindex="-1"><strong>${escapeHtml(event.title)}</strong><small>${event.allDay?'All day':formatClock(event.time)+' · '+(event.durationMinutes||60)+' min'} · ${category}${event.travelMinutes?' · Travel: '+event.travelMinutes+' min each way':''}${event.tentative?' · Tentative':''}${event.keep===false?' · Excluded':''}</small>${controls}</article>`;
+        }).join('')||'<p class="helper">No plans for this day.</p>'}</div></details>`;
+      }).join('')}</div>`;
+    }
+    function tryMoveOccurrence(index,occurrenceIndex,change) {
+      const item=state.items[index];if(!item)return false;
+      const occurrence=item.occurrences.find(occ=>occ.occurrenceIndex===occurrenceIndex);if(!occurrence)return false;
+      const next={day:change.day??occurrence.day,time:change.time??occurrence.time};
+      if(!Number.isInteger(next.day)||next.day<0||next.day>6||!/^([01]\d|2[0-3]):[0-5]\d$/.test(next.time))return false;
+      const previous=item.overrides[occurrenceIndex],unplacedCount=state.unplaced.length;
+      item.overrides[occurrenceIndex]=next;allocate();
+      if(!item.occurrences.some(occ=>occ.occurrenceIndex===occurrenceIndex)||state.unplaced.length>unplacedCount){
+        if(previous)item.overrides[occurrenceIndex]=previous;else delete item.overrides[occurrenceIndex];
+        allocate();state.openReviewDay=occurrence.day;return false;
+      }
+      state.openReviewDay=next.day;return true;
+    }
+    function renderReview() {
+      allocate();const events=reviewEvents();
+      shell(`<div class="panel-kicker">Your week, at a glance</div><h2>Here’s a first draft.</h2>
+        <p class="panel-intro">See your week before and after. Select a block or expand a day to review the details and adjust new activities.</p>
+        <div class="calendar-toggle" role="group" aria-label="Compare your week"><button class="${state.reviewMode==='before'?'active':''}" data-action="reviewMode" data-id="before" aria-pressed="${state.reviewMode==='before'}">Before</button><button class="${state.reviewMode==='after'?'active':''}" data-action="reviewMode" data-id="after" aria-pressed="${state.reviewMode==='after'}">After</button></div>
+        <p class="helper">${weekLabel} · ${escapeHtml(Intl.DateTimeFormat().resolvedOptions().timeZone)}</p>
+        <div class="calendar-legend" aria-label="Calendar colors"><span><i class="legend-dot"></i>Existing plans</span><span><i class="legend-dot todo"></i>To-dos</span><span><i class="legend-dot fun"></i>Fun</span><span><i class="legend-dot rest"></i>Downtime</span></div>
+        ${weekCalendarMarkup(events,{separated:true,action:'focusReviewEvent'})}
+        <p class="helper">All seven days, with overlapping plans side by side. Expand a day below for full titles and controls.</p>
+        ${reviewAgendaMarkup(events)}
+        ${state.reviewMode==='after'&&state.unplaced.length?`<div class="unplaced"><strong>${state.unplaced.length} ${state.unplaced.length===1?'activity needs':'activities need'} more room</strong>${state.unplaced.map(entry=>`<p>${escapeHtml(entry.title)}: ${escapeHtml(entry.reason)}</p>`).join('')}<p>Adjust the request or open up time in Your list. These activities haven’t been placed.</p></div>`:''}
+        <p class="helper">${state.reviewMode==='after'?'Aim: 1 fun activity for every 2 to-dos per day when the list and availability allow. Travel buffers protect outings; cream blocks show downtime.':'This is the week before adding your new activities. Excluded plans are faded.'}</p>
+        <div class="goal-summary"><small>Your goal and reward</small><strong>${escapeHtml(state.direction)} ${state.goalAmount} ${state.goalMode==='tasks'?'tasks':'hours'} ${escapeHtml(state.goalFocus)} · ${escapeHtml(state.reward||'No reward picked')}</strong></div>
+        <p class="helper">Nothing has been added yet. You’ll confirm before publishing.</p>
+        ${navButtons('back','publish','Confirm and add to calendar')}`,4);
+      document.querySelectorAll('.review-day-details').forEach(group=>group.addEventListener('toggle',()=>{
+        const day=+group.dataset.day;if(group.open)state.openReviewDay=day;else if(state.openReviewDay===day)state.openReviewDay=null;
+      }));
+      document.querySelectorAll('[data-occ-day], [data-occ-time]').forEach(el=>el.addEventListener('change',e=>{
+        const [index,occurrenceIndex]=(e.target.dataset.occDay||e.target.dataset.occTime).split(':').map(Number);
+        const accepted=tryMoveOccurrence(index,occurrenceIndex,e.target.dataset.occDay?{day:+e.target.value}:{time:e.target.value});
+        renderReview();
+        const field=document.querySelector(`[${e.target.dataset.occDay?'data-occ-day':'data-occ-time'}="${index}:${occurrenceIndex}"]`);field?.focus();
+        if(!accepted)toast('That move does not fit. Check timing rules, travel, downtime, and existing plans.');
+      }));
+    }
+    function renderSuccess() {
+      const calendarNames = state.calendars.map(x=>x === "google" ? "Google Calendar" : "Apple Calendar").join(" and ") || "your calendar";
+      shell(`<div class="panel-kicker">Week planned</div><h2>You’ve made room for it all.</h2>
+        <p class="panel-intro">Your approved activities are ready for ${calendarNames}.</p>
+        <div class="summary-success"><span class="success-mark">✓</span><div><strong>${state.items.length} new activities in your week</strong><p>${state.imported.filter(x=>x.keep).length} existing plans kept. Your reward: ${escapeHtml(state.reward || "your choice")}.</p></div></div>
+        <div class="action-row"><button class="button" data-action="finish">Back to Sunday</button></div>
+        <p class="bottom-note">This prototype does not write to a real calendar.</p>`, 4);
+    }
+    function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+    function toast(message) { const el=document.getElementById("toast"); el.textContent=message; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2300); }
+    const actions = {
+      start: ()=>{state.page=0;render();},
+      itemHelp: ()=>document.getElementById("item-help").showModal(),
+      editItem: e=>{state.editingIndex=+e.currentTarget.dataset.id;const field=document.getElementById("new-item");field.value=state.items[state.editingIndex].raw;document.querySelector('#add-item-form button[type="submit"]').textContent="Save item";field.focus();field.select();},
+      calendar: ()=>connectGoogle(),
+      connectGoogle: ()=>connectGoogle(),
+      disconnectGoogle: ()=>{GoogleCalendar.disconnect();state.calendars=[];state.imported=state.imported.filter(x=>x.source!=="google");state.scanned=false;state.googleMessage="Disconnected.";render();},
+      focusReviewEvent: e=>{const row=document.getElementById('review-row-'+e.currentTarget.dataset.id);if(!row)return;const group=row.closest('details');group.open=true;state.openReviewDay=+group.dataset.day;row.focus();row.scrollIntoView({block:'nearest'});},
+      focusPlan: e=>{const index=+e.currentTarget.dataset.id,row=document.getElementById('plan-row-'+index);if(!row)return;const group=row.closest('details');group.open=true;state.openPlanDay=state.imported[index].day;row.focus();row.scrollIntoView({block:'nearest'});},
+      day: e=>{const id=+e.currentTarget.dataset.id;state.scans=state.scans.includes(id)?state.scans.filter(x=>x!==id):[...state.scans,id];renderPlans();},
+      selectAllPlanDays: ()=>{state.scans=[0,1,2,3,4,5,6];renderPlans();},
+      scan: ()=>scanGoogle(),
+      togglePlanKeep: e=>{const item=state.imported[+e.currentTarget.dataset.id];item.keep=!item.keep;if(state.page===4){state.openReviewDay=item.day;renderReview();}else{state.openPlanDay=item.day;renderPlans();}},
+      planTentative: e=>{const item=state.imported[+e.currentTarget.dataset.id];item.tentative=!item.tentative;if(state.page===4){state.openReviewDay=item.day;renderReview();}else{state.openPlanDay=item.day;renderPlans();}},
+      back: ()=>{state.page=Math.max(-1,state.page-1);render();},
+      toPlans: ()=>advanceTo(1),
+      toList: ()=>advanceTo(2),
+      toGoal: ()=>advanceTo(3),
+      planDay: e=>{const day=+e.currentTarget.dataset.id;state.planDays=state.planDays.includes(day)?state.planDays.filter(x=>x!==day):[...state.planDays,day].sort((a,b)=>a-b);resetGeneratedSchedule();renderList();},
+      selectAllDays: ()=>{state.planDays=[0,1,2,3,4,5,6];resetGeneratedSchedule();renderList();},
+      toReview: ()=>{if(!state.items.length){toast("Add an activity to build your week.");return;}if(!canBuildWeek()){toast("Select a day to schedule, or add a daily item.");return;}advanceTo(4);},
+      goStep: e=>{const step=+e.currentTarget.dataset.id;if(state.completed.has(step)){state.page=step;render();}},
+      reviewMode: e=>{state.reviewMode=e.currentTarget.dataset.id;renderReview();},
+      goalMode: e=>{state.goalMode=e.currentTarget.dataset.id;if(state.goalMode==="time"&&(state.goalFocus==="selected tasks"||state.goalFocus==="all to-dos"))state.goalFocus="phone use";if(state.goalMode==="tasks")state.goalFocus="selected tasks";renderGoal();},
+      idea: ()=>{const idea="Try a new neighborhood coffee shop";if(!state.items.some(x=>x.title.toLowerCase()===idea.toLowerCase()))addItem(idea);else toast("That idea is already on your list.");},
+      removeItem: e=>{const i=+e.currentTarget.dataset.id;const removed=state.items.splice(i,1)[0];renderReview();toast(`Removed ${removed.title} from this draft.`);},
+      publish: ()=>{state.published=true;advanceTo(5);},
+      finish: ()=>{state.page=-1;state.published=false;state.completed=new Set();render();}
+    };
+    async function loadSharedEstimates(){
+      if(location.protocol==='file:')return;
+      try{
+        const response=await fetch('/api/estimate-model',{credentials:'omit',signal:AbortSignal.timeout(5000)});
+        if(!response.ok)return;
+        const model=await response.json();Planner.setModel(model);state.sharedLearningAvailable=true;
+        if(state.page<=0)state.items=state.items.map(item=>item.estimateSource==='Your estimate'?item:Planner.parse(item.raw));
+        if(state.page===2)renderList();
+      }catch{}
+    }
+    render();
+    loadSharedEstimates();
+  </script>
+</body>
+</html>
