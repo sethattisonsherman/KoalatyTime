@@ -209,7 +209,7 @@
       if (preference.matches || layer) return;
       ambience = document.createElement('div');
       ambience.className = 'garden-ambience'; ambience.setAttribute('aria-hidden', 'true');
-      ambience.innerHTML = '<span class="garden-cloud"></span><span class="garden-cloud"></span><span class="garden-fish"></span><span class="garden-fish"></span>';
+      ambience.innerHTML = '<span class="garden-cloud"></span><span class="garden-cloud"></span><span class="garden-fish"></span><span class="garden-fish"></span><span class="garden-water-glint"></span><span class="garden-water-glint"></span><span class="garden-water-glint"></span>';
       layer = document.createElement('div');
       layer.className = 'koala-roam-layer'; layer.setAttribute('aria-hidden', 'true');
       document.body.append(ambience, layer);
