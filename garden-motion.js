@@ -1,41 +1,53 @@
 (function () {
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-  function perchPoint(rect, size, viewport, random = Math.random, input = false) {
-    const minX = clamp(rect.left + 8, 4, viewport.width - size - 4);
-    const maxX = clamp(rect.right - size - 8, minX, viewport.width - size - 4);
+  // Document coordinates keep a pet attached to the same edge while the page scrolls.
+  function edgePoint(rect, size, viewport, scroll, edge = 'top', random = Math.random, input = false) {
+    const left = rect.left + scroll.x, right = rect.right + scroll.x;
+    const top = rect.top + scroll.y, bottom = rect.bottom + scroll.y;
+    const minX = clamp(left + 8, scroll.x + 4, scroll.x + viewport.width - size - 4);
+    const maxX = clamp(right - size - 8, minX, scroll.x + viewport.width - size - 4);
+    if (edge !== 'top' && rect.height >= size + 32) {
+      return {
+        x: Math.round(clamp(edge === 'left' ? left - size * .62 : right - size * .38, scroll.x + 4, scroll.x + viewport.width - size - 4)),
+        y: Math.round(top + 12 + random() * (bottom - top - size - 24))
+      };
+    }
     return {
       x: Math.round(minX + random() * (maxX - minX)),
-      y: Math.round(clamp(rect.top - size * (input ? .38 : .66), 4, viewport.height - size - 4))
+      y: Math.round(top - size * (input ? .38 : .66))
     };
   }
 
-  function walkPoint(rect, size, viewport, current, random = Math.random, input = false) {
-    const minX = clamp(rect.left + 8, 4, viewport.width - size - 4);
-    const maxX = clamp(rect.right - size - 8, minX, viewport.width - size - 4);
+  function walkPoint(rect, size, viewport, scroll, current, edge = 'top', random = Math.random, input = false) {
+    const start = edgePoint(rect, size, viewport, scroll, edge, () => 0, input);
+    const end = edgePoint(rect, size, viewport, scroll, edge, () => 1, input);
+    const axis = edge === 'top' || start.y === end.y ? 'x' : 'y';
     const distance = 26 + random() * 105, direction = random() < .5 ? -1 : 1;
-    let x = clamp(current.x + direction * distance, minX, maxX);
-    if (Math.abs(x - current.x) < 12) x = clamp(current.x - direction * distance, minX, maxX);
-    return { x: Math.round(x), y: perchPoint(rect, size, viewport, random, input).y };
+    let value = clamp(current[axis] + direction * distance, start[axis], end[axis]);
+    if (Math.abs(value - current[axis]) < 12) value = clamp(current[axis] - direction * distance, start[axis], end[axis]);
+    return { x: axis === 'x' ? Math.round(value) : start.x, y: axis === 'y' ? Math.round(value) : start.y };
   }
 
   function chooseButtonMode(previous, random = Math.random) {
-    const modes = ['walk', 'jump', 'dangle', 'breathe'].filter(mode => mode !== previous);
+    const modes = ['walk', 'jump', 'dangle', 'breathe', 'wave', 'peek'].filter(mode => mode !== previous);
     return modes[Math.floor(random() * modes.length)];
   }
 
-  if (typeof module !== 'undefined' && module.exports) module.exports = { perchPoint, walkPoint, chooseButtonMode };
+  if (typeof module !== 'undefined' && module.exports) module.exports = { edgePoint, walkPoint, chooseButtonMode };
   if (typeof document === 'undefined') return;
 
   function startGardenMotion() {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const random = () => Math.random();
     const app = document.getElementById('app');
-    let ambience = null, layer = null, pets = [], observer = null, scrollFrame = 0;
+    let ambience = null, layer = null, pets = [], observer = null, layoutFrame = 0;
 
     function viewport() {
       return { width: window.innerWidth, height: window.innerHeight, size: window.innerWidth <= 700 ? 36 : 54 };
     }
+
+    function scroll() { return { x: window.scrollX, y: window.scrollY }; }
 
     function isInputHost(host) {
       return host.matches('.koala-nook.field-nook, .add-item-form');
@@ -43,19 +55,37 @@
 
     function landmarks() {
       const selector = app
-        ? '#app .welcome, #app .main-panel, #app .week-stamp, #app .source-scan, #app .schedule-prefs, #app .idea-box, #app .plan-section, #app .goal-summary, #app .calendar-save-panel, #app .steps, #app h1, #app h2, #app .koala-nook.field-nook, #app .add-item-form'
-        : 'body > main, body > main h1, body > main h2';
+        ? '#app .welcome, #app .main-panel, #app .week-stamp, #app .source-scan, #app .schedule-prefs, #app .idea-box, #app .plan-section, #app .goal-summary, #app .calendar-save-panel, #app .steps, #app .koala-nook.field-nook, #app .add-item-form'
+        : 'body > main';
       const { height, size } = viewport();
       return [...document.querySelectorAll(selector)].filter(host => {
         const rect = host.getBoundingClientRect();
-        return rect.width > size * 2 && rect.height > 20 && rect.top > 70 && rect.top < height - 18 && rect.bottom > 80;
+        return rect.width > size * 2 && rect.height > 20 && rect.top < height - 18 && rect.bottom > 80;
       });
     }
 
-    function setAt(pet, host, point) {
-      pet.host = host; pet.x = point.x; pet.y = point.y;
-      const rect = host.getBoundingClientRect();
-      pet.fraction = clamp((point.x - rect.left) / Math.max(1, rect.width - viewport().size), 0, 1);
+    function chooseHost(hosts) {
+      const containers = hosts.filter(host => !isInputHost(host));
+      const pool = containers.length && random() < .86 ? containers : hosts;
+      return pool[Math.floor(random() * pool.length)];
+    }
+
+    function chooseEdge(host, view) {
+      if (isInputHost(host) || view.width <= 700 || host.getBoundingClientRect().height < view.size * 1.8) return 'top';
+      const roll = random();
+      return roll < .72 ? 'top' : roll < .86 ? 'left' : 'right';
+    }
+
+    function pointOn(host, edge, fraction = random()) {
+      const view = viewport();
+      return edgePoint(host.getBoundingClientRect(), view.size, view, scroll(), edge, () => fraction, isInputHost(host));
+    }
+
+    function setAt(pet, host, point, edge = pet.edge || 'top') {
+      pet.host = host; pet.edge = edge; pet.x = point.x; pet.y = point.y;
+      const start = pointOn(host, edge, 0), end = pointOn(host, edge, 1);
+      const axis = edge === 'top' ? 'x' : 'y';
+      pet.fraction = clamp((point[axis] - start[axis]) / Math.max(1, end[axis] - start[axis]), 0, 1);
       pet.el.style.left = `${point.x}px`;
       pet.el.style.top = `${point.y}px`;
       pet.el.hidden = false;
@@ -66,22 +96,25 @@
     }
 
     function idle(pet) {
-      pet.el.className = `roaming-koala ${pet.left ? 'facing-left ' : ''}${pet.host && isInputHost(pet.host) ? 'is-dangling' : 'is-idle'}`;
-      schedule(pet, 550 + random() * 1500);
+      const pose = isInputHost(pet.host) ? 'is-dangling' : pet.edge !== 'top' ? 'is-clinging'
+        : ['is-idle', 'is-idle', 'is-waving', 'is-sitting', 'is-peeking'][Math.floor(random() * 5)];
+      pet.el.className = `roaming-koala edge-${pet.edge} ${pet.left ? 'facing-left ' : ''}${pose}`;
+      schedule(pet, 700 + random() * 1700);
     }
 
-    function animateTo(pet, host, point, jumping) {
+    function animateTo(pet, host, point, edge, jumping = false) {
       const dx = point.x - pet.x, dy = point.y - pet.y;
-      pet.left = dx < 0;
-      pet.el.className = `roaming-koala ${pet.left ? 'facing-left ' : ''}${jumping ? 'is-jumping' : 'is-walking'}`;
-      const duration = jumping ? 880 : clamp(Math.hypot(dx, dy) * 23, 900, 3500);
+      pet.left = Math.abs(dx) > 3 ? dx < 0 : edge === 'left';
+      const action = jumping ? 'is-jumping' : edge === 'top' ? 'is-walking' : 'is-climbing';
+      pet.el.className = `roaming-koala edge-${edge} ${pet.left ? 'facing-left ' : ''}${action}`;
+      const duration = jumping ? 920 : clamp(Math.hypot(dx, dy) * 23, 900, 3500);
       const frames = jumping
-        ? [{ transform: 'translate(0px, 0px)' }, { transform: `translate(${dx / 2}px, ${dy / 2 - 25}px)`, offset: .5 }, { transform: `translate(${dx}px, ${dy}px)` }]
+        ? [{ transform: 'translate(0px, 0px)' }, { transform: `translate(${dx / 2}px, ${dy / 2 - 28}px)`, offset: .5 }, { transform: `translate(${dx}px, ${dy}px)` }]
         : [{ transform: 'translate(0px, 0px)' }, { transform: `translate(${dx}px, ${dy}px)` }];
       pet.motion = pet.el.animate(frames, { duration, easing: jumping ? 'ease-in-out' : 'linear', fill: 'forwards' });
       pet.motion.onfinish = () => {
         if (!layer) return;
-        setAt(pet, host, point);
+        setAt(pet, host, point, edge);
         pet.motion.cancel(); pet.motion = null;
         idle(pet);
       };
@@ -93,53 +126,57 @@
       const hosts = landmarks(), view = viewport();
       if (!hosts.length) { pet.el.hidden = true; schedule(pet, 1300); return; }
       if (!pet.host?.isConnected || !hosts.includes(pet.host)) {
-        const host = hosts[Math.floor(random() * hosts.length)];
-        setAt(pet, host, perchPoint(host.getBoundingClientRect(), view.size, view, random, isInputHost(host)));
+        const host = chooseHost(hosts), edge = chooseEdge(host, view);
+        setAt(pet, host, pointOn(host, edge), edge);
       }
       const roll = random();
-      if (roll < .22) { idle(pet); return; }
-      if (roll < .72) {
-        const point = walkPoint(pet.host.getBoundingClientRect(), view.size, view, pet, random, isInputHost(pet.host));
-        if (Math.abs(point.x - pet.x) < 8) { idle(pet); return; }
-        animateTo(pet, pet.host, point, false);
+      if (roll < .30) { idle(pet); return; }
+      if (roll < .82) {
+        const point = walkPoint(pet.host.getBoundingClientRect(), view.size, view, scroll(), pet, pet.edge, random, isInputHost(pet.host));
+        if (Math.hypot(point.x - pet.x, point.y - pet.y) < 8) { idle(pet); return; }
+        animateTo(pet, pet.host, point, pet.edge);
         return;
       }
-      const nearby = hosts.filter(host => host !== pet.host).map(host => ({ host, point: perchPoint(host.getBoundingClientRect(), view.size, view, random, isInputHost(host)) }))
-        .filter(({ point }) => Math.hypot(point.x - pet.x, point.y - pet.y) < 240);
-      const destination = nearby.length ? nearby[Math.floor(random() * nearby.length)] : {
-        host: pet.host,
-        point: walkPoint(pet.host.getBoundingClientRect(), view.size, view, pet, random, isInputHost(pet.host))
-      };
-      animateTo(pet, destination.host, destination.point, true);
+      const nearby = hosts.filter(host => host !== pet.host && !isInputHost(host)).map(host => {
+        const edge = chooseEdge(host, view);
+        return { host, edge, point: pointOn(host, edge) };
+      }).filter(({ point }) => Math.hypot(point.x - pet.x, point.y - pet.y) < 220);
+      if (nearby.length) {
+        const destination = nearby[Math.floor(random() * nearby.length)];
+        animateTo(pet, destination.host, destination.point, destination.edge, true);
+      } else {
+        const point = walkPoint(pet.host.getBoundingClientRect(), view.size, view, scroll(), pet, pet.edge, random, isInputHost(pet.host));
+        animateTo(pet, pet.host, point, pet.edge, true);
+      }
     }
 
     function reanchor() {
-      scrollFrame = 0;
+      layoutFrame = 0;
       if (!layer) return;
       const hosts = landmarks(), view = viewport();
       pets.forEach(pet => {
         window.clearTimeout(pet.timer);
         pet.motion?.cancel(); pet.motion = null;
-        if (!pet.host?.isConnected || !hosts.includes(pet.host)) pet.host = hosts[Math.floor(random() * hosts.length)] || null;
+        const replaced = !pet.host?.isConnected;
+        if (replaced) pet.host = chooseHost(hosts) || null;
         if (!pet.host) { pet.el.hidden = true; schedule(pet, 1000); return; }
-        const rect = pet.host.getBoundingClientRect();
-        const minX = clamp(rect.left + 8, 4, view.width - view.size - 4);
-        const maxX = clamp(rect.right - view.size - 8, minX, view.width - view.size - 4);
-        const point = perchPoint(rect, view.size, view, () => pet.fraction ?? random(), isInputHost(pet.host));
-        point.x = Math.round(minX + (pet.fraction ?? random()) * (maxX - minX));
-        setAt(pet, pet.host, point);
+        const edge = replaced || (pet.edge !== 'top' && (view.width <= 700 || pet.host.getBoundingClientRect().height < view.size * 1.8))
+          ? chooseEdge(pet.host, view) : pet.edge;
+        setAt(pet, pet.host, pointOn(pet.host, edge, pet.fraction), edge);
         idle(pet);
       });
     }
 
     function requestReanchor() {
-      if (!scrollFrame) scrollFrame = window.requestAnimationFrame(reanchor);
+      if (!layoutFrame) layoutFrame = window.requestAnimationFrame(reanchor);
     }
 
     function stop() {
       pets.forEach(pet => { window.clearTimeout(pet.timer); pet.motion?.cancel(); });
       pets = [];
       observer?.disconnect(); observer = null;
+      if (layoutFrame) window.cancelAnimationFrame(layoutFrame);
+      layoutFrame = 0;
       ambience?.remove(); ambience = null;
       layer?.remove(); layer = null;
     }
@@ -153,18 +190,20 @@
       layer.className = 'koala-roam-layer'; layer.setAttribute('aria-hidden', 'true');
       document.body.append(ambience, layer);
       const hosts = landmarks(), view = viewport();
+      let firstHost = null;
       for (let i = 0; i < 2; i++) {
         const el = document.createElement('div');
         el.className = 'roaming-koala is-idle';
         el.innerHTML = '<span class="koala-sprite"></span>';
         layer.append(el);
-        const pet = { el, host: null, x: 0, y: 0, fraction: 0, left: false, timer: null, motion: null };
+        const pet = { el, host: null, edge: 'top', x: 0, y: 0, fraction: 0, left: false, timer: null, motion: null };
         if (hosts.length) {
-          const host = hosts[Math.floor(random() * hosts.length)];
-          setAt(pet, host, perchPoint(host.getBoundingClientRect(), view.size, view, random, isInputHost(host)));
-        } else el.hidden = true;
+          const host = chooseHost(hosts.filter(candidate => candidate !== firstHost)) || chooseHost(hosts), edge = chooseEdge(host, view);
+          if (i === 0) firstHost = host;
+          setAt(pet, host, pointOn(host, edge), edge);
+          idle(pet);
+        } else { el.hidden = true; schedule(pet, 1000); }
         pets.push(pet);
-        schedule(pet, 500 + i * 700 + random() * 900);
       }
       if (app) {
         observer = new MutationObserver(requestReanchor);
@@ -209,7 +248,6 @@
       if (button && !button.matches(':hover')) removeButtonPet(button);
     });
     preference.addEventListener('change', () => preference.matches ? stop() : start());
-    window.addEventListener('scroll', requestReanchor, { passive: true });
     window.addEventListener('resize', requestReanchor);
     start();
   }
