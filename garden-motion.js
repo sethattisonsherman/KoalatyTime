@@ -43,7 +43,7 @@
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const random = () => Math.random();
     const app = document.getElementById('app');
-    let ambience = null, layer = null, pets = [], observer = null, layoutFrame = 0;
+    let ambience = null, layer = null, pets = [], observer = null, layoutFrame = 0, renderFrame = 0;
 
     function viewport() {
       return { width: window.innerWidth, height: window.innerHeight, size: window.innerWidth <= 700 ? 36 : 54 };
@@ -90,12 +90,37 @@
       return edgePoint(host.getBoundingClientRect(), view.size, view, scroll(), edge, () => fraction, isInputHost(host));
     }
 
+    function fractionOn(host, edge, point) {
+      const start = pointOn(host, edge, 0), end = pointOn(host, edge, 1);
+      const axis = edge === 'top' || edge === 'bottom' ? 'x' : 'y';
+      return clamp((point[axis] - start[axis]) / Math.max(1, end[axis] - start[axis]), 0, 1);
+    }
+
+    function hostKind(host) {
+      if (!host) return null;
+      return ['welcome', 'main-panel', 'week-stamp', 'source-scan', 'schedule-prefs', 'idea-box', 'plan-section', 'goal-summary', 'calendar-save-panel', 'steps', 'koala-nook', 'add-item-form']
+        .find(name => host.classList.contains(name)) || (host.matches('body > main') ? 'privacy-main' : null);
+    }
+
+    function replacementFor(host, hosts, edge, fraction, point) {
+      const kind = hostKind(host);
+      if (!kind) return null;
+      const matches = hosts.filter(candidate => hostKind(candidate) === kind);
+      return matches.sort((a, b) => {
+        const first = pointOn(a, edge, fraction), second = pointOn(b, edge, fraction);
+        return Math.hypot(first.x - point.x, first.y - point.y) - Math.hypot(second.x - point.x, second.y - point.y);
+      })[0] || null;
+    }
+
+    function visualPoint(pet) {
+      const rect = pet.el.getBoundingClientRect(), offset = scroll();
+      return { x: rect.left + offset.x, y: rect.top + offset.y };
+    }
+
     function setAt(pet, host, point, edge = pet.edge || 'top') {
       pet.host = host; pet.edge = edge; pet.x = point.x; pet.y = point.y;
       if (edge === 'left' || edge === 'right') pet.left = facingLeft(edge);
-      const start = pointOn(host, edge, 0), end = pointOn(host, edge, 1);
-      const axis = edge === 'top' || edge === 'bottom' ? 'x' : 'y';
-      pet.fraction = clamp((point[axis] - start[axis]) / Math.max(1, end[axis] - start[axis]), 0, 1);
+      pet.fraction = fractionOn(host, edge, point);
       pet.el.style.left = `${point.x}px`;
       pet.el.style.top = `${point.y}px`;
       const rect = host.getBoundingClientRect(), offset = scroll();
@@ -128,18 +153,33 @@
 
     function animateTo(pet, host, point, edge, jumping = false) {
       const dx = point.x - pet.x, dy = point.y - pet.y;
+      pet.destination = { host, point, edge, fraction: fractionOn(host, edge, point) };
       pet.left = facingLeft(edge, dx);
       const action = jumping ? 'is-jumping' : edge === 'left' || edge === 'right' ? 'is-climbing' : 'is-walking';
       pet.el.className = `roaming-koala edge-${edge} ${pet.left ? 'facing-left ' : ''}${action}`;
-      const duration = jumping ? 920 : clamp(Math.hypot(dx, dy) * 23, 900, 3500);
+      const duration = jumping ? clamp(Math.hypot(dx, dy) * 4, 920, 1800) : clamp(Math.hypot(dx, dy) * 23, 900, 3500);
       const frames = jumping
         ? [{ transform: 'translate(0px, 0px)' }, { transform: `translate(${dx / 2}px, ${dy / 2 - 28}px)`, offset: .5 }, { transform: `translate(${dx}px, ${dy}px)` }]
         : [{ transform: 'translate(0px, 0px)' }, { transform: `translate(${dx}px, ${dy}px)` }];
       pet.motion = pet.el.animate(frames, { duration, easing: jumping ? 'ease-in-out' : 'linear', fill: 'forwards' });
       pet.motion.onfinish = () => {
         if (!layer) return;
-        setAt(pet, host, point, edge);
-        pet.motion.cancel(); pet.motion = null;
+        const target = pet.destination;
+        if (!target?.host?.isConnected) {
+          const hosts = landmarks();
+          const replacement = replacementFor(target?.host, hosts, target?.edge, target?.fraction, target?.point);
+          if (replacement) {
+            target.host = replacement;
+            target.point = pointOn(replacement, target.edge, target.fraction);
+          } else {
+            const next = closestVisibleHost(pet, hosts);
+            if (next) transitionTo(pet, next.host, next.point, next.edge);
+            else { pet.motion.cancel(); pet.motion = null; pet.destination = null; pet.el.hidden = true; schedule(pet, 1000); }
+            return;
+          }
+        }
+        setAt(pet, target.host, target.point, target.edge);
+        pet.motion.cancel(); pet.motion = null; pet.destination = null;
         land(pet);
       };
     }
@@ -174,13 +214,75 @@
       }
     }
 
+    function transitionTo(pet, host, point, edge) {
+      window.clearTimeout(pet.timer);
+      const current = visualPoint(pet);
+      pet.motion?.cancel(); pet.motion = null; pet.destination = null;
+      pet.x = current.x; pet.y = current.y;
+      pet.el.style.left = `${current.x}px`;
+      pet.el.style.top = `${current.y}px`;
+      pet.el.hidden = false;
+      animateTo(pet, host, point, edge, true);
+    }
+
+    function closestVisibleHost(pet, hosts) {
+      const current = visualPoint(pet);
+      return hosts.map(host => {
+        const rect = host.getBoundingClientRect(), size = viewport().size;
+        const fraction = clamp((current.x - rect.left - scroll().x - 8) / Math.max(1, rect.width - size - 16), 0, 1);
+        return { host, edge: 'top', point: pointOn(host, 'top', fraction) };
+      }).sort((a, b) => Math.hypot(a.point.x - current.x, a.point.y - current.y) - Math.hypot(b.point.x - current.x, b.point.y - current.y))[0];
+    }
+
+    function reconcileRender() {
+      renderFrame = 0;
+      if (!layer) return;
+      const hosts = landmarks();
+      pets.forEach(pet => {
+        const current = visualPoint(pet);
+        const sourceLost = !pet.host?.isConnected;
+        const targetLost = !!pet.destination && !pet.destination.host.isConnected;
+        let targetShift = 0;
+        if (!sourceLost && !targetLost) return;
+        if (sourceLost) pet.host = replacementFor(pet.host, hosts, pet.edge, pet.fraction, current);
+        if (targetLost) {
+          const target = pet.destination;
+          const replacement = replacementFor(target.host, hosts, target.edge, target.fraction, target.point);
+          if (replacement) {
+            target.host = replacement;
+            const point = pointOn(replacement, target.edge, target.fraction);
+            targetShift = Math.hypot(point.x - target.point.x, point.y - target.point.y);
+            target.point = point;
+          }
+        }
+        if (pet.motion && pet.destination?.host.isConnected) {
+          if (targetShift <= 12) return;
+          transitionTo(pet, pet.destination.host, pet.destination.point, pet.destination.edge);
+          return;
+        }
+        if (!pet.motion && pet.host?.isConnected) {
+          const point = pointOn(pet.host, pet.edge, pet.fraction);
+          if (Math.hypot(point.x - current.x, point.y - current.y) <= 12) return;
+          transitionTo(pet, pet.host, point, pet.edge);
+          return;
+        }
+        const destination = closestVisibleHost(pet, hosts);
+        if (destination) transitionTo(pet, destination.host, destination.point, destination.edge);
+        else { pet.motion?.cancel(); pet.motion = null; pet.destination = null; pet.el.hidden = true; schedule(pet, 1000); }
+      });
+    }
+
+    function requestReconcile() {
+      if (!renderFrame) renderFrame = window.requestAnimationFrame(reconcileRender);
+    }
+
     function reanchor() {
       layoutFrame = 0;
       if (!layer) return;
       const hosts = landmarks(), view = viewport();
       pets.forEach(pet => {
         window.clearTimeout(pet.timer);
-        pet.motion?.cancel(); pet.motion = null;
+        pet.motion?.cancel(); pet.motion = null; pet.destination = null;
         const replaced = !pet.host?.isConnected;
         if (replaced) pet.host = chooseHost(hosts) || null;
         if (!pet.host) { pet.el.hidden = true; schedule(pet, 1000); return; }
@@ -200,7 +302,9 @@
       pets = [];
       observer?.disconnect(); observer = null;
       if (layoutFrame) window.cancelAnimationFrame(layoutFrame);
+      if (renderFrame) window.cancelAnimationFrame(renderFrame);
       layoutFrame = 0;
+      renderFrame = 0;
       ambience?.remove(); ambience = null;
       layer?.remove(); layer = null;
     }
@@ -220,7 +324,7 @@
         el.className = 'roaming-koala is-idle';
         el.innerHTML = '<span class="koala-sprite"></span>';
         layer.append(el);
-        const pet = { el, host: null, edge: 'top', x: 0, y: 0, fraction: 0, left: false, timer: null, motion: null };
+        const pet = { el, host: null, edge: 'top', x: 0, y: 0, fraction: 0, left: false, timer: null, motion: null, destination: null };
         if (hosts.length) {
           const host = chooseHost(hosts.filter(candidate => candidate !== firstHost)) || chooseHost(hosts), edge = chooseEdge(host, view);
           if (i === 0) firstHost = host;
@@ -230,7 +334,7 @@
         pets.push(pet);
       }
       if (app) {
-        observer = new MutationObserver(requestReanchor);
+        observer = new MutationObserver(requestReconcile);
         observer.observe(app, { childList: true, subtree: false });
       }
     }
