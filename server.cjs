@@ -2,7 +2,7 @@ const http=require('node:http');
 const fs=require('node:fs');
 const path=require('node:path');
 const {createStore}=require('./estimate-store.cjs');
-const files={'/':'index.html','/index.html':'index.html','/planner.js':'planner.js','/config.js':'config.js','/google-calendar.js':'google-calendar.js'};
+const files={'/':'index.html','/index.html':'index.html','/privacy.html':'privacy.html','/planner.js':'planner.js','/config.js':'config.js','/google-calendar.js':'google-calendar.js'};
 function createServer(store){
   let windowStart=0,contributions=0;
   return http.createServer(async(req,res)=>{
@@ -39,3 +39,4 @@ if(require.main===module)createStore(path.join(__dirname,'data','estimate-aggreg
   server.listen(5173,'localhost',()=>console.log('Sunday is running at http://localhost:5173'));
 }).catch(()=>{console.error('Could not load aggregate estimates. Check the local data file.');process.exitCode=1;});
 module.exports={createServer};
+

@@ -1,10 +1,13 @@
+Warning: truncated output (original token count: 18669)
+Total output lines: 825
+
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f4f7f5">
-  <title>Sunday — Make room for your week</title>
+  <title>KoalatyTime — Make room for your week</title>
   <style>
     :root {
       color-scheme: light;
@@ -258,6 +261,13 @@
     .goal-summary { margin-top: 17px; padding: 14px 16px; border-left: 3px solid var(--lime); border-radius: 4px 11px 11px 4px; background: #f6f9ee; }
     .goal-summary small { display: block; color: var(--muted); }
     .goal-summary strong { font-size: 15px; }
+    .calendar-save-panel { margin-top: 24px; padding: 20px; border: 1px solid var(--line); border-radius: 15px; background: #f8fbf9; }
+    .calendar-save-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+    .calendar-event-links { display: grid; gap: 8px; margin-top: 12px; }
+    .calendar-event-link { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+    .calendar-event-link span { font-size: 13px; font-weight: 600; }
+    .calendar-link-details { margin-top: 18px; }
+    .calendar-link-details summary { color: var(--green-dark); font-weight: 650; cursor: pointer; }
     .calendar-toggle { width: fit-content; padding: 4px; display: flex; gap: 3px; margin: 20px 0 12px; border-radius: 11px; background: #eff4f1; }
     .calendar-toggle button { min-height: 36px; padding: 0 15px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-weight: 600; }
     .calendar-toggle button.active { background: white; color: var(--ink); box-shadow: 0 1px 5px rgba(30,52,48,.08); }
@@ -331,10 +341,11 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true">S</span><span>Sunday</span></div>
-    <span class="demo-tag">Your week, with room to breathe</span>
+    <div class="brand"><span class="brand-mark" aria-hidden="true">K</span><span>KoalatyTime</span></div>
+    <div class="demo-tag">Your week, with room to breathe · <a href="privacy.html">Privacy policy</a></div>
   </header>
   <main class="shell" id="app" aria-live="polite"></main>
+  <noscript><p>KoalatyTime is a weekly planning app. You can build a plan without signing in; connecting Google Calendar is optional. JavaScript must be enabled to use the planner. Read our <a href="privacy.html">Privacy Policy</a>.</p></noscript>
   <div class="toast" id="toast" role="status"></div>
   <script src="planner.js"></script>
   <script src="config.js"></script>
@@ -374,9 +385,6 @@
       reviewMode: "after",
       openReviewDay: null,
       reward: "",
-      published: false,
-      publishBusy: false,
-      publishError: "",
       ideaHistory: []
     };
     state.unplaced = [];
@@ -415,28 +423,30 @@
       if (state.page === 2) return renderList();
       if (state.page === 3) return renderGoal();
       if (state.page === 4) return renderReview();
-      return renderSuccess();
+      return renderWelcome();
     }
     function renderWelcome() {
       document.getElementById("app").innerHTML = `<section class="welcome">
         <div class="welcome-mark" aria-hidden="true">☀</div>
-        <div class="panel-kicker">A little Sunday reset</div>
+        <div class="panel-kicker">Your weekly planning companion</div>
         <h1>Make room for your week.</h1>
         <p class="lede">Bring your plans, to-dos, and things you’re looking forward to into one week that feels like yours.</p>
+        <p class="helper">KoalatyTime is free to explore without an account. Google Calendar is optional and connects only when you choose.</p>
         <div class="week-stamp"><div><small>Planning for</small><strong>${weekLabel}</strong></div><small>About 5 minutes</small></div>
         <button class="button" data-action="start">Plan this week</button>
-        <p class="bottom-note">You’ll review everything before it goes on your calendar.</p>
+        <p class="bottom-note">You’ll review everything before it goes on your calendar. <a href="privacy.html">Read our Privacy Policy</a>.</p>
       </section>`;
       document.querySelector('[data-action="start"]').addEventListener("click", actions.start);
     }
     function renderCalendar() {
       shell(`<div class="panel-kicker">First, your calendar</div><h2>Where should your plans live?</h2>
-        <p class="panel-intro">Connect Google Calendar to read your existing plans. You can also skip this step.</p>
+        <p class="panel-intro">You can connect Google Calendar to read your existing plans, or skip this step. No account connection is needed to try KoalatyTime or save your finished plan.</p>
+        <p class="helper"><strong>For a quick booth demo, skip calendar connection.</strong> You can build a plan and save it without signing in.</p>
         <div class="choice-grid">
           ${calendarChoice("google", "G", "Google Calendar", GoogleCalendar.connected() ? "Connected · primary calendar" : "Read existing plans from your primary calendar")}
         </div>
         ${googleConnectionMarkup()}
-        <p class="helper">Sunday reads existing plans and adds approved events to Google Calendar. Apple Calendar is coming later.</p>
+        <p class="helper">Connecting is optional and only reads your primary calendar. You can save your new plan later with a calendar file or individual Google Calendar links.</p>
         ${navButtons(null, "toPlans", state.calendars.length ? "Continue" : "Skip for now")}`, 0);
     }
     function calendarChoice(id, mark, name, desc) {
@@ -481,37 +491,7 @@
       try {
         const plans=await GoogleCalendar.readWeek(weekStart,selected);
         const previous=new Map(state.imported.filter(x=>x.source==='google').map(x=>[x.googleId,x]));
-        state.imported=state.imported.filter(x=>x.source!=='google'||!selected.includes(x.day));
-        state.imported.push(...plans.map(plan=>{const old=previous.get(plan.googleId);return old?{...plan,keep:old.keep,tentative:old.tentative}:plan;}));
-        state.scanned=true;state.googleMessage=`Checked ${selected.length} days. Found ${plans.length} plan${plans.length===1?'':'s'}.`;
-      } catch(error){state.googleError=true;state.googleMessage=error.message;}
-      state.scanBusy=false;renderPlans();
-    }
-    function renderPlans() {
-      shell(`<div class="panel-kicker">Plans already in the week</div><h2>Anything else already planned?</h2>
-        <p class="panel-intro">Check your calendar for existing plans, then review your week below.</p>
-        <div class="source-scan"><strong>Which days should we check?</strong><p class="helper" style="margin:2px 0 0">${weekLabel} · choose a few days or the full week.</p>
-          ${googleConnectionMarkup()}
-          <button class="button small secondary" style="margin-top:8px" data-action="selectAllPlanDays">Select all days</button>
-          <div class="day-checks">${weekDays.map((d,i)=>`<button class="day-pill ${state.scans.includes(i)?'checked':''}" data-action="day" data-id="${i}" aria-pressed="${state.scans.includes(i)}" ${state.scanBusy?'disabled':''}>${d} ${dates[i].split(' ')[1]}</button>`).join('')}</div>
-          <div class="scan-action"><button class="button small" data-action="scan" ${state.scanBusy?'disabled':''}>${state.scanBusy?'Checking…':state.scanned?'Check again':'Check selected days'}</button></div>
-        </div>
-        <div class="plan-section"><h3>Review Plans</h3><p class="helper">${weekLabel} · ${escapeHtml(Intl.DateTimeFormat().resolvedOptions().timeZone)}</p>
-          ${planCalendarMarkup()}
-          <p class="helper">Select a calendar block or expand a day below to review its plans.</p>
-          ${planAgendaMarkup()}
-        </div>${navButtons('back','toList')}`,1);
-      document.querySelectorAll('.plan-day-details').forEach(group=>group.addEventListener('toggle',()=>{
-        const day=+group.dataset.day;
-        if(group.open)state.openPlanDay=day;
-        else if(state.openPlanDay===day)state.openPlanDay=null;
-      }));
-    }
-    function planAgendaMarkup() {
-      const fullDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-      return `<div class="plan-agenda" aria-label="Plans by day">${fullDays.map((day,dayIndex)=>{
-        const plans=state.imported.map((plan,i)=>({plan,i})).filter(({plan})=>plan.day===dayIndex).sort((a,b)=>Number(!!b.plan.allDay)-Number(!!a.plan.allDay)||a.plan.time.localeCompare(b.plan.time));
-        return `<details class="plan-day-details" name="plan-days" data-day="${dayIndex}" ${state.openPlanDay===dayIndex?'open':''}><summary>${day} · ${dates[dayIndex]}<span>${plans.length} plan${plans.length===1?'':'s'}</span></summary><div class="plan-day-plans">${plans.map(({plan,i})=>`<article class="plan-agenda-row ${plan.keep?'':'excluded'}" id="plan-row-${i}" tabindex="-1"><strong>${escapeHtml(plan.title)}</strong><small>${plan.allDay?'All day':formatClock(plan.time)+' · '+plan.durationMinutes+' min'} · ${plan.source==='google'?'Google Calendar':'Added by you'}${plan.tentative?' · Tentative':''}${!plan.keep?' · Excluded':''}</small><div class="plan-agenda-actions"><button class="text-button" data-action="togglePlanKeep" data-id="${i}">${plan.keep?'Exclude':'Restore'}</button><button class="text-button" data-action="planTentative" data-id="${i}">${plan.tentative?'Mark confirmed':'Mark tentative'}</button></div></article>`).join('')||'<p class="helper">No plans for this day.</p>'}</div></details>`;
+        state.imported=state.imported.filter…669 tokens truncated…n-day-details" name="plan-days" data-day="${dayIndex}" ${state.openPlanDay===dayIndex?'open':''}><summary>${day} · ${dates[dayIndex]}<span>${plans.length} plan${plans.length===1?'':'s'}</span></summary><div class="plan-day-plans">${plans.map(({plan,i})=>`<article class="plan-agenda-row ${plan.keep?'':'excluded'}" id="plan-row-${i}" tabindex="-1"><strong>${escapeHtml(plan.title)}</strong><small>${plan.allDay?'All day':formatClock(plan.time)+' · '+plan.durationMinutes+' min'} · ${plan.source==='google'?'Google Calendar':'Added by you'}${plan.tentative?' · Tentative':''}${!plan.keep?' · Excluded':''}</small><div class="plan-agenda-actions"><button class="text-button" data-action="togglePlanKeep" data-id="${i}">${plan.keep?'Exclude':'Restore'}</button><button class="text-button" data-action="planTentative" data-id="${i}">${plan.tentative?'Mark confirmed':'Mark tentative'}</button></div></article>`).join('')||'<p class="helper">No plans for this day.</p>'}</div></details>`;
       }).join('')}</div>`;
     }
     function planCalendarMarkup() {
@@ -656,6 +636,57 @@
       for(;start+minutes<=21*60;start+=15)if(busy.every(([a,b])=>start+minutes<=a||start>=b))break;
       return {id:'goal-block',kind:'goal',day:6,time:`${String(Math.floor(start/60)).padStart(2,'0')}:${String(start%60).padStart(2,'0')}`,durationMinutes:minutes,title:state.goalText.trim()||'Work toward my weekly goal',type:'Goal',keep:true};
     }
+    function calendarEventsToSave(events=reviewEvents()) {
+      return events.filter(event=>event.keep!==false&&(event.kind==='new'||event.kind==='goal')).map(event=>({
+        ...event,
+        title:event.kind==='goal'?`Weekly goal: ${event.title}`:event.title,
+        description:event.kind==='goal'?`Goal: ${state.goalText||event.title}\nReward: ${state.reward||'No reward selected'}`:''
+      }));
+    }
+    function calendarEventDates(event) {
+      const start=new Date(weekStart);start.setDate(start.getDate()+event.day);
+      const [hour,minute]=event.time.split(':').map(Number);start.setHours(hour,minute,0,0);
+      return {start,end:new Date(start.getTime()+(event.durationMinutes||60)*60000)};
+    }
+    function compactUtc(date) { return date.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z'); }
+    function googleCalendarEventUrl(event) {
+      const {start,end}=calendarEventDates(event),zone=Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const url=new URL('https://calendar.google.com/calendar/r/eventedit');
+      url.searchParams.set('action','TEMPLATE');
+      url.searchParams.set('dates',`${compactUtc(start)}/${compactUtc(end)}`);
+      url.searchParams.set('stz',zone);url.searchParams.set('etz',zone);
+      url.searchParams.set('text',event.title);
+      if(event.description)url.searchParams.set('details',event.description);
+      return url.href;
+    }
+    function escapeIcsText(value) {
+      return String(value||'').replace(/\\/g,'\\\\').replace(/\r\n|\r|\n/g,'\\n').replace(/;/g,'\\;').replace(/,/g,'\\,');
+    }
+    function foldIcsLine(line) {
+      const encoder=new TextEncoder();let folded=[],part='',bytes=0;
+      for(const character of line){const size=encoder.encode(character).length;if(bytes+size>75){folded.push(part);part=' '+character;bytes=size+1;}else{part+=character;bytes+=size;}}
+      folded.push(part);return folded.join('\r\n');
+    }
+    function buildIcs(events) {
+      const stamp=compactUtc(new Date());
+      const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//KoalatyTime//Weekly Planner//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:KoalatyTime weekly plan'];
+      events.forEach((event,index)=>{
+        const {start,end}=calendarEventDates(event);
+        const uid=`${Date.now()}-${index}-${Math.random().toString(36).slice(2)}@koalatytime`;
+        lines.push('BEGIN:VEVENT',`UID:${uid}`,`DTSTAMP:${stamp}`,`DTSTART:${compactUtc(start)}`,`DTEND:${compactUtc(end)}`,`SUMMARY:${escapeIcsText(event.title)}`);
+        if(event.description)lines.push(`DESCRIPTION:${escapeIcsText(event.description)}`);
+        lines.push('END:VEVENT');
+      });
+      lines.push('END:VCALENDAR');
+      return lines.map(foldIcsLine).join('\r\n')+'\r\n';
+    }
+    function downloadCalendarFile() {
+      const events=calendarEventsToSave();if(!events.length){toast('There are no new events to save yet.');return;}
+      const date=`${weekStart.getFullYear()}-${String(weekStart.getMonth()+1).padStart(2,'0')}-${String(weekStart.getDate()).padStart(2,'0')}`;
+      const blob=new Blob([buildIcs(events)],{type:'text/calendar;charset=utf-8'}),url=URL.createObjectURL(blob);
+      const link=document.createElement('a');link.href=url;link.download=`KoalatyTime-week-of-${date}.ics`;document.body.append(link);link.click();link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),10000);
+    }
     function reviewAgendaMarkup(events) {
       const fullDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
       return `<div class="plan-agenda" aria-label="Review plans by day">${fullDays.map((day,dayIndex)=>{
@@ -687,7 +718,7 @@
       state.openReviewDay=next.day;return true;
     }
     function renderReview() {
-      allocate();const events=reviewEvents();
+      allocate();const events=reviewEvents(),saveEvents=calendarEventsToSave(events),goalSummary=events.find(event=>event.kind==='goal')||goalBlock(events);
       shell(`<div class="panel-kicker">Your week, at a glance</div><h2>Here’s a first draft.</h2>
         <p class="panel-intro">See your week before and after. Select a block or expand a day to review the details and adjust new activities.</p>
         <div class="calendar-toggle" role="group" aria-label="Compare your week"><button class="${state.reviewMode==='before'?'active':''}" data-action="reviewMode" data-id="before" aria-pressed="${state.reviewMode==='before'}">Before</button><button class="${state.reviewMode==='after'?'active':''}" data-action="reviewMode" data-id="after" aria-pressed="${state.reviewMode==='after'}">After</button></div>
@@ -698,10 +729,15 @@
         ${reviewAgendaMarkup(events)}
         ${state.reviewMode==='after'&&state.unplaced.length?`<div class="unplaced"><strong>${state.unplaced.length} ${state.unplaced.length===1?'activity needs':'activities need'} more room</strong>${state.unplaced.map(entry=>`<p>${escapeHtml(entry.title)}: ${escapeHtml(entry.reason)}</p>`).join('')}<p>Adjust the request or open up time in Your list. These activities haven’t been placed.</p></div>`:''}
         <p class="helper">${state.reviewMode==='after'?'Aim: 1 fun activity for every 2 to-dos per day when the list and availability allow. Travel buffers protect outings; cream blocks show downtime.':'This is the week before adding your new activities. Excluded plans are faded.'}</p>
-        <div class="goal-summary"><small>Sunday goal block</small><strong>${escapeHtml(state.goalText||`${state.direction} ${state.goalAmount} ${state.goalMode==='tasks'?'tasks':'hours'}`)} · ${formatClock(events.find(event=>event.kind==='goal').time)} for ${events.find(event=>event.kind==='goal').durationMinutes} min · Reward: ${escapeHtml(state.reward||'choose a reward')}</strong></div>
-        ${state.publishError?`<p class="connection-status error" role="alert">${escapeHtml(state.publishError)}</p>`:''}
-        <p class="helper">Confirm to add the new activities and Sunday goal block to Google Calendar. Existing plans stay as they are.</p>
-        ${navButtons('back','publish',state.publishBusy?'Adding to calendar…':'Confirm and add to calendar')}`,4);
+        <div class="goal-summary"><small>Sunday goal block</small><strong>${escapeHtml(state.goalText||`${state.direction} ${state.goalAmount} ${state.goalMode==='tasks'?'tasks':'hours'}`)} · ${formatClock(goalSummary.time)} for ${goalSummary.durationMinutes} min · Reward: ${escapeHtml(state.reward||'choose a reward')}</strong></div>
+        ${state.reviewMode==='after'?`<section class="calendar-save-panel" aria-labelledby="calendar-save-title">
+          <h3 id="calendar-save-title">Take your plan with you</h3>
+          <p class="helper">KoalatyTime won’t connect to or change your calendar to save these events. Only new activities and your weekly goal are included; existing plans and protected downtime are left out.</p>
+          <div class="calendar-save-actions"><button class="button" data-action="downloadIcs">Download all events (.ics)</button></div>
+          <p class="helper">Import the file into Apple Calendar or Outlook, or import it into Google Calendar on a computer. On phones, use the individual Google links below for a simpler Google Calendar flow.</p>
+          <details class="calendar-link-details"><summary>Add events to Google Calendar individually (${saveEvents.length})</summary><div class="calendar-event-links">${saveEvents.map(event=>`<div class="calendar-event-link"><span>${escapeHtml(event.title)} · ${weekDays[event.day]} ${dates[event.day]}${event.time?' · '+formatClock(event.time):''}</span><a class="button small secondary" href="${escapeHtml(googleCalendarEventUrl(event))}" target="_blank" rel="noopener noreferrer">Add event</a></div>`).join('')}</div></details>
+        </section>`:'<p class="helper">Switch to After to download or add your new events to a calendar.</p>'}
+        ${navButtons('back','toWelcome','Finish')}`,4);
       document.querySelectorAll('.review-day-details').forEach(group=>group.addEventListener('toggle',()=>{
         const day=+group.dataset.day;if(group.open)state.openReviewDay=day;else if(state.openReviewDay===day)state.openReviewDay=null;
       }));
@@ -712,14 +748,6 @@
         const field=document.querySelector(`[${e.target.dataset.occDay?'data-occ-day':'data-occ-time'}="${index}:${occurrenceIndex}"]`);field?.focus();
         if(!accepted)toast('That move does not fit. Check timing rules, travel, downtime, and existing plans.');
       }));
-    }
-    function renderSuccess() {
-      const calendarNames = state.calendars.map(x=>x === "google" ? "Google Calendar" : "Apple Calendar").join(" and ") || "your calendar";
-      shell(`<div class="panel-kicker">Week planned</div><h2>You’ve made room for it all.</h2>
-        <p class="panel-intro">Your approved plans are on ${calendarNames}.</p>
-        <div class="summary-success"><span class="success-mark">✓</span><div><strong>${state.publishedCount} events added, including your Sunday goal block</strong><p>${state.imported.filter(x=>x.keep).length} existing plans kept. Your reward: ${escapeHtml(state.reward || "your choice")}.</p></div></div>
-        <div class="action-row"><button class="button" data-action="finish">Back to Sunday</button></div>
-        <p class="bottom-note">You can edit or move these events in Google Calendar anytime.</p>`, 4);
     }
     function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
     function toast(message) { const el=document.getElementById("toast"); el.textContent=message; el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2300); }
@@ -749,8 +777,8 @@
       goalMode: e=>{state.goalMode=e.currentTarget.dataset.id;if(state.goalMode==="time"&&(state.goalFocus==="selected tasks"||state.goalFocus==="all to-dos"))state.goalFocus="phone use";if(state.goalMode==="tasks")state.goalFocus="selected tasks";renderGoal();},
       idea: ()=>{const ideas=['Take a walk somewhere new','Try a new recipe','Visit a local bookstore','Call someone you miss','Make a playlist for the week','Try a beginner yoga video','Explore a nearby park','Have a screen-free coffee break','Go to a farmers market','Learn a simple new recipe','Take photos on a neighborhood walk','Write a note to someone','Visit a museum or gallery','Stretch for fifteen minutes','Plan a small day trip','Try a new lunch spot','Read outside for a while','Tidy one small corner','Watch a film you have never seen','Do a short creative project','Take yourself out for breakfast','Borrow a book from the library','Try a new board game','Go on a sunset walk','Make something by hand','Listen to a podcast on a walk','Plant herbs or care for a plant','Bake something to share','Spend an hour on a hobby','Do a local food crawl'];const used=new Set([...state.items.map(x=>x.title.toLowerCase()),...state.ideaHistory.slice(-8).map(x=>x.toLowerCase())]);const available=ideas.filter(x=>!used.has(x.toLowerCase()));const idea=(available.length?available:ideas)[Math.floor(Math.random()*(available.length||ideas.length))];state.ideaHistory.push(idea);addItem(idea);},
       removeItem: e=>{const i=+e.currentTarget.dataset.id;const removed=state.items.splice(i,1)[0];renderReview();toast(`Removed ${removed.title} from this draft.`);},
-      publish: async ()=>{if(state.publishBusy)return;state.publishError='';if(location.protocol==='file:'){state.publishError='Open Sunday at http://localhost:5173 to connect Google Calendar.';renderReview();return;}try{const pending=GoogleCalendar.connect();state.publishBusy=true;renderReview();await pending;const sundayPlans=await GoogleCalendar.readWeek(weekStart,[6]);const previous=new Map(state.imported.filter(plan=>plan.source==='google'&&plan.day===6).map(plan=>[plan.googleId,plan]));state.imported=state.imported.filter(plan=>plan.source!=='google'||plan.day!==6);state.imported.push(...sundayPlans.map(plan=>{const old=previous.get(plan.googleId);return old?{...plan,keep:old.keep,tentative:old.tentative}:plan;}));state.reviewMode='after';allocate();const events=reviewEvents().filter(event=>event.keep!==false&&event.kind!=='existing'&&event.kind!=='downtime').map(event=>({title:event.kind==='goal'?`Weekly goal: ${event.title}`:event.title,day:event.day,time:event.time,durationMinutes:event.durationMinutes||60,description:event.kind==='goal'?`Goal: ${state.goalText||event.title}\nReward: ${state.reward||'No reward selected'}`:''}));state.publishedCount=await GoogleCalendar.writeEvents(weekStart,events);state.calendars=['google'];state.published=true;state.publishBusy=false;advanceTo(5);}catch(error){state.publishBusy=false;state.publishError=error.message||'Could not add plans to Google Calendar. Try again.';renderReview();}},
-      finish: ()=>{state.page=-1;state.published=false;state.completed=new Set();render();}
+      downloadIcs: ()=>downloadCalendarFile(),
+      toWelcome: ()=>{state.page=-1;state.completed=new Set();render();}
     };
     async function loadSharedEstimates(){
       if(location.protocol==='file:')return;
@@ -767,3 +795,4 @@
   </script>
 </body>
 </html>
+
