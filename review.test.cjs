@@ -6,7 +6,7 @@ function app(){
   const context=vm.createContext({Intl,Date,Set,TextEncoder});
   vm.runInContext(fs.readFileSync(__dirname+'/planner.js','utf8'),context);
   const html=fs.readFileSync(__dirname+'/index.html','utf8');
-  const script=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)][0][1].replace(/\n    render\(\);\n    loadSharedEstimates\(\);/,'');
+  const script=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)][0][1].replace(/\r?\n    render\(\);\r?\n    loadSharedEstimates\(\);/,'');
   vm.runInContext(script,context);return code=>vm.runInContext(code,context);
 }
 test('Plans and Review share seven time-based columns and overlapping event lanes',()=>{
