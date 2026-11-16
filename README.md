@@ -18,11 +18,12 @@ Open [http://localhost:5173](http://localhost:5173). No package installation is 
 - Review plans in a responsive seven-day calendar with expandable day details.
 - Enter activities in plain language, with days, times, recurrence, durations, and travel buffers.
 - Correct estimated categories, durations, and travel time.
+- Add approved new activities and the weekly goal block to Google Calendar after confirmation.
 - Optionally contribute predefined activity families and rounded numeric corrections to a shared aggregate model. Event titles and account information are excluded from contributions.
 - Spread new activities across the week, aiming for one fun activity per two to-dos per day where the list and available time allow.
 - Reserve adjustable downtime, compare the week before and after, and move or remove activities in Review.
 
-Google Calendar access is read only. The final publishing flow remains a prototype and does not write events to Google Calendar. Apple Calendar and screenshot uploads are not currently supported.
+Google Calendar reading and writing require the OAuth setup below. Tokens stay in tab memory. Apple Calendar and screenshot uploads are not currently supported.
 
 ## Google Calendar
 

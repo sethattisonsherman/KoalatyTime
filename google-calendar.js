@@ -1,7 +1,8 @@
 // Google Identity Services: tokens live only in memory for this tab.
 const GoogleCalendar = (() => {
-  const scope = 'https://www.googleapis.com/auth/calendar.events.readonly';
+  const scope = 'https://www.googleapis.com/auth/calendar.events';
   let token = '', expiresAt = 0, loading, client;
+  const created = new Set();
   function load() {
     if (window.google?.accounts?.oauth2) return Promise.resolve();
     return loading ||= new Promise((resolve, reject) => {
@@ -20,6 +21,9 @@ const GoogleCalendar = (() => {
   function connect() {
     // Call directly from a click after prepare(), so the popup keeps its user gesture.
     return new Promise((resolve, reject) => {
+      if (location.protocol === 'file:') { reject(new Error('Open http://localhost:5173 to connect Google Calendar. See GOOGLE_CALENDAR_SETUP.md.')); return; }
+      if (!window.SUNDAY_CONFIG?.googleClientId) { reject(new Error('Add your public Google OAuth client ID to config.js first. See GOOGLE_CALENDAR_SETUP.md.')); return; }
+      if (!window.google?.accounts?.oauth2) { reject(new Error('Google sign-in is still loading. Go back to the calendar step and try again.')); return; }
       client = google.accounts.oauth2.initTokenClient({
         client_id: window.SUNDAY_CONFIG.googleClientId, scope,
         callback: response => {
@@ -78,5 +82,27 @@ const GoogleCalendar = (() => {
     } while (pageToken);
     return segments(events, start, selectedDays);
   }
-  return { prepare, connect, connected, disconnect, readWeek, segments };
+  async function writeEvents(start, events) {
+    if (!connected()) throw new Error('Google Calendar access expired. Confirm again and approve event access.');
+    const zone=Intl.DateTimeFormat().resolvedOptions().timeZone;
+    let added=0;
+    for (const event of events) {
+      const day=new Date(start);day.setDate(day.getDate()+event.day);
+      const [hour,minute]=event.time.split(':').map(Number);
+      const from=new Date(day);from.setHours(hour,minute,0,0);
+      const to=new Date(from.getTime()+event.durationMinutes*60000);
+      const key=[event.title,from.toISOString(),event.durationMinutes].join('|');
+      if(created.has(key))continue;
+      const response=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({summary:event.title,description:event.description,start:{dateTime:from.toISOString(),timeZone:zone},end:{dateTime:to.toISOString(),timeZone:zone}})});
+      if(!response.ok){
+        if(response.status===401){token='';throw new Error('Your Google session expired. Confirm again to reconnect.');}
+        if(response.status===403)throw new Error('Google did not allow adding events. Check that Calendar API event access is enabled for your OAuth app, then reconnect.');
+        throw new Error('Google Calendar could not add an event. Check your connection and try confirming again.');
+      }
+      created.add(key);
+      added++;
+    }
+    return added;
+  }
+  return { prepare, connect, connected, disconnect, readWeek, writeEvents, segments };
 })();
