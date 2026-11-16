@@ -17,18 +17,21 @@ body { position: relative; }
 .garden-fish:nth-child(4) { right: 8%; animation-delay: -3s; animation-duration: 9s; transform: scaleX(-1); }
 .roaming-koala { position: absolute; width: 54px; height: 54px; pointer-events: none; will-change: transform; }
 .roaming-koala::after { content: ""; position: absolute; z-index: 2; display: block; background: var(--koala-rail-color, #355d49); pointer-events: none; }
-.roaming-koala.edge-top::after { left: 5px; right: 5px; top: var(--koala-contact-y); height: var(--koala-rail-width, 2px); }
+.roaming-koala.edge-top::after,
+.roaming-koala.edge-bottom::after { left: 5px; right: 5px; top: var(--koala-contact-y); height: var(--koala-rail-width, 2px); }
 .roaming-koala.edge-left::after,
 .roaming-koala.edge-right::after { top: 5px; bottom: 5px; left: var(--koala-contact-x); width: var(--koala-rail-width, 2px); }
 .roaming-koala::before { content: ""; position: absolute; z-index: 3; width: 4px; height: 4px; opacity: 0; background: #8bab83; pointer-events: none; }
-.roaming-koala.edge-top::before { top: calc(var(--koala-contact-y) - 5px); left: 34%; box-shadow: 13px -2px #8bab83, -6px 2px #c5d9bf; }
+.roaming-koala.edge-top::before,
+.roaming-koala.edge-bottom::before { top: calc(var(--koala-contact-y) - 5px); left: 34%; box-shadow: 13px -2px #8bab83, -6px 2px #c5d9bf; }
 .roaming-koala.edge-left::before,
 .roaming-koala.edge-right::before { top: 30%; left: calc(var(--koala-contact-x) - 5px); box-shadow: 1px 15px #8bab83, -2px -7px #c5d9bf; }
 .roaming-koala.is-landing::before { animation: koala-contact .36s steps(3) both; }
 .roaming-koala .koala-sprite { display: block; width: 100%; height: 100%; background: url("assets/koala-sprite-sheet.png") 100% 100% / 400% 200% no-repeat; image-rendering: pixelated; }
 .roaming-koala.facing-left .koala-sprite { scale: -1 1; }
 .roaming-koala.is-walking .koala-sprite { animation: koala-walk .54s steps(1) infinite; }
-.roaming-koala.is-climbing .koala-sprite { animation: koala-climb .7s steps(1) infinite; }
+.roaming-koala.edge-left.is-climbing .koala-sprite { animation: koala-climb-facing-right .64s steps(1) infinite; }
+.roaming-koala.edge-right.is-climbing .koala-sprite { animation: koala-climb-facing-left .64s steps(1) infinite; }
 .roaming-koala.is-jumping .koala-sprite { animation: koala-jump .88s steps(1) 1; }
 .roaming-koala.is-idle .koala-sprite { animation: koala-breathe 2.8s ease-in-out infinite; }
 .roaming-koala.is-dangling .koala-sprite { animation: koala-dangle 2.1s ease-in-out infinite; transform-origin: 50% 15%; }
@@ -54,7 +57,8 @@ body { position: relative; }
 }
 @keyframes koala-breathe { 0%,100% { background-position: 100% 100%; translate: 0 0; } 50% { background-position: 100% 100%; translate: 0 -2px; } }
 @keyframes koala-dangle { 0%,100% { background-position: 100% 100%; rotate: -8deg; } 50% { background-position: 100% 100%; rotate: 9deg; } }
-@keyframes koala-climb { 0%,49% { background-position: 33.333% 0%; rotate: -12deg; } 50%,100% { background-position: 100% 0%; rotate: 9deg; } }
+@keyframes koala-climb-facing-right { 0%,49% { background-position: 33.333% 100%; translate: 2px 3px; rotate: -13deg; } 50%,100% { background-position: 100% 0%; translate: 0 -3px; rotate: 8deg; } }
+@keyframes koala-climb-facing-left { 0%,49% { background-position: 33.333% 100%; translate: -2px 3px; rotate: 13deg; } 50%,100% { background-position: 100% 0%; translate: 0 -3px; rotate: -8deg; } }
 @keyframes koala-cling { 0%,100% { background-position: 100% 100%; rotate: -7deg; } 50% { background-position: 100% 100%; rotate: 5deg; } }
 @keyframes koala-land { 0%,35% { background-position: 0% 100%; translate: 0 3px; } 36%,100% { background-position: 100% 100%; translate: 0 0; } }
 @keyframes koala-contact { 0% { opacity: 0; scale: .6; } 35% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: 1.7; } }

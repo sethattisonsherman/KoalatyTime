@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { edgePoint, walkPoint } = require('./garden-motion.js');
+const { edgePoint, walkPoint, facingLeft } = require('./garden-motion.js');
 
 const viewport = { width: 1280, height: 800, size: 54 };
 const card = { left: 220, right: 1020, top: 180, bottom: 500, width: 800, height: 320 };
@@ -38,4 +38,19 @@ test('koalas can walk in either direction along a panel rim', () => {
   assert(left.x < current.x);
   assert(right.x > current.x);
   assert.equal(left.y, right.y);
+});
+
+test('a koala runs along the container floor at the bottom edge', () => {
+  const current = edgePoint(card, 54, viewport, { x: 0, y: 0 }, 'bottom', () => .5);
+  const next = walkPoint(card, 54, viewport, { x: 0, y: 0 }, current, 'bottom', () => .75);
+  assert.equal(next.y, current.y);
+  assert(next.x !== current.x);
+  assert(Math.abs(current.y + 54 * .90 - card.bottom) <= 1);
+});
+
+test('climbing koalas face into the container on both side edges', () => {
+  assert.equal(facingLeft('right', 0), true);
+  assert.equal(facingLeft('left', 0), false);
+  assert.equal(facingLeft('top', -30), true);
+  assert.equal(facingLeft('bottom', 30), false);
 });

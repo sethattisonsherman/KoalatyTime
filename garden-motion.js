@@ -7,7 +7,7 @@
     const top = rect.top + scroll.y, bottom = rect.bottom + scroll.y;
     const minX = clamp(left + 8, scroll.x + 4, scroll.x + viewport.width - size - 4);
     const maxX = clamp(right - size - 8, minX, scroll.x + viewport.width - size - 4);
-    if (edge !== 'top' && rect.height >= size + 32) {
+    if ((edge === 'left' || edge === 'right') && rect.height >= size + 32) {
       return {
         x: Math.round(clamp(edge === 'left' ? left - size * .62 : right - size * .38, scroll.x + 4, scroll.x + viewport.width - size - 4)),
         y: Math.round(top + 12 + random() * (bottom - top - size - 24))
@@ -16,21 +16,27 @@
     const perchMinX = input ? Math.max(minX, maxX - size * .35) : minX;
     return {
       x: Math.round(perchMinX + random() * (maxX - perchMinX)),
-      y: Math.round(top - size * (input ? .50 : .90))
+      y: Math.round((edge === 'bottom' ? bottom : top) - size * (input ? .50 : .90))
     };
   }
 
   function walkPoint(rect, size, viewport, scroll, current, edge = 'top', random = Math.random, input = false) {
     const start = edgePoint(rect, size, viewport, scroll, edge, () => 0, input);
     const end = edgePoint(rect, size, viewport, scroll, edge, () => 1, input);
-    const axis = edge === 'top' || start.y === end.y ? 'x' : 'y';
+    const axis = edge === 'top' || edge === 'bottom' || start.y === end.y ? 'x' : 'y';
     const distance = 26 + random() * 105, direction = random() < .5 ? -1 : 1;
     let value = clamp(current[axis] + direction * distance, start[axis], end[axis]);
     if (Math.abs(value - current[axis]) < 12) value = clamp(current[axis] - direction * distance, start[axis], end[axis]);
     return { x: axis === 'x' ? Math.round(value) : start.x, y: axis === 'y' ? Math.round(value) : start.y };
   }
 
-  if (typeof module !== 'undefined' && module.exports) module.exports = { edgePoint, walkPoint };
+  function facingLeft(edge, dx = 0) {
+    if (edge === 'right') return true;
+    if (edge === 'left') return false;
+    return dx < 0;
+  }
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = { edgePoint, walkPoint, facingLeft };
   if (typeof document === 'undefined') return;
 
   function startGardenMotion() {
@@ -71,9 +77,12 @@
     }
 
     function chooseEdge(host, view) {
-      if (isInputHost(host) || view.width <= 700 || host.getBoundingClientRect().height < view.size * 1.8) return 'top';
+      const rect = host.getBoundingClientRect();
+      if (isInputHost(host) || rect.height < view.size * 1.8) return 'top';
       const roll = random();
-      return roll < .72 ? 'top' : roll < .86 ? 'left' : 'right';
+      const floorVisible = rect.height > view.size * 2.4 && rect.bottom < view.height + view.size;
+      if (view.width <= 700) return floorVisible && roll > .84 ? 'bottom' : 'top';
+      return roll < .60 ? 'top' : roll < .74 && floorVisible ? 'bottom' : roll < .87 ? 'left' : 'right';
     }
 
     function pointOn(host, edge, fraction = random()) {
@@ -83,17 +92,18 @@
 
     function setAt(pet, host, point, edge = pet.edge || 'top') {
       pet.host = host; pet.edge = edge; pet.x = point.x; pet.y = point.y;
+      if (edge === 'left' || edge === 'right') pet.left = facingLeft(edge);
       const start = pointOn(host, edge, 0), end = pointOn(host, edge, 1);
-      const axis = edge === 'top' ? 'x' : 'y';
+      const axis = edge === 'top' || edge === 'bottom' ? 'x' : 'y';
       pet.fraction = clamp((point[axis] - start[axis]) / Math.max(1, end[axis] - start[axis]), 0, 1);
       pet.el.style.left = `${point.x}px`;
       pet.el.style.top = `${point.y}px`;
       const rect = host.getBoundingClientRect(), offset = scroll();
       const border = getComputedStyle(host);
-      const borderSide = edge === 'top' ? 'Top' : edge === 'left' ? 'Left' : 'Right';
+      const borderSide = edge === 'top' ? 'Top' : edge === 'bottom' ? 'Bottom' : edge === 'left' ? 'Left' : 'Right';
       const borderWidth = parseFloat(border[`border${borderSide}Width`]) || 0;
       pet.el.style.setProperty('--koala-contact-x', `${Math.round((edge === 'left' ? rect.left : rect.right) + offset.x - point.x)}px`);
-      pet.el.style.setProperty('--koala-contact-y', `${Math.round(rect.top + offset.y - point.y)}px`);
+      pet.el.style.setProperty('--koala-contact-y', `${Math.round((edge === 'bottom' ? rect.bottom : rect.top) + offset.y - point.y)}px`);
       pet.el.style.setProperty('--koala-rail-color', borderWidth ? border[`border${borderSide}Color`] : 'rgba(53, 110, 87, .42)');
       pet.el.style.setProperty('--koala-rail-width', `${clamp(borderWidth, 2, 4)}px`);
       pet.el.hidden = false;
@@ -104,7 +114,8 @@
     }
 
     function idle(pet) {
-      const pose = isInputHost(pet.host) ? 'is-dangling' : pet.edge !== 'top' ? 'is-clinging'
+      const pose = isInputHost(pet.host) ? 'is-dangling' : pet.edge === 'left' || pet.edge === 'right' ? 'is-clinging'
+        : pet.edge === 'bottom' ? ['is-idle', 'is-waving', 'is-sitting'][Math.floor(random() * 3)]
         : ['is-idle', 'is-idle', 'is-waving', 'is-sitting', 'is-peeking', 'is-hanging'][Math.floor(random() * 6)];
       pet.el.className = `roaming-koala edge-${pet.edge} ${pet.left ? 'facing-left ' : ''}${pose}`;
       schedule(pet, 700 + random() * 1700);
@@ -117,8 +128,8 @@
 
     function animateTo(pet, host, point, edge, jumping = false) {
       const dx = point.x - pet.x, dy = point.y - pet.y;
-      pet.left = Math.abs(dx) > 3 ? dx < 0 : edge === 'left';
-      const action = jumping ? 'is-jumping' : edge === 'top' ? 'is-walking' : 'is-climbing';
+      pet.left = facingLeft(edge, dx);
+      const action = jumping ? 'is-jumping' : edge === 'left' || edge === 'right' ? 'is-climbing' : 'is-walking';
       pet.el.className = `roaming-koala edge-${edge} ${pet.left ? 'facing-left ' : ''}${action}`;
       const duration = jumping ? 920 : clamp(Math.hypot(dx, dy) * 23, 900, 3500);
       const frames = jumping
@@ -173,7 +184,7 @@
         const replaced = !pet.host?.isConnected;
         if (replaced) pet.host = chooseHost(hosts) || null;
         if (!pet.host) { pet.el.hidden = true; schedule(pet, 1000); return; }
-        const edge = replaced || (pet.edge !== 'top' && (view.width <= 700 || pet.host.getBoundingClientRect().height < view.size * 1.8))
+        const edge = replaced || ((pet.edge === 'left' || pet.edge === 'right') && (view.width <= 700 || pet.host.getBoundingClientRect().height < view.size * 1.8))
           ? chooseEdge(pet.host, view) : pet.edge;
         setAt(pet, pet.host, pointOn(pet.host, edge, pet.fraction), edge);
         idle(pet);

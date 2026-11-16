@@ -210,7 +210,13 @@
     .repeat-option { margin-top: 8px; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
     .repeat-option input { accent-color: var(--green); }
     .quiet-times { margin-top: 13px; border-top: 1px solid #dfe8e3; padding-top: 11px; }
-    .quiet-times h3 { margin: 0; color: var(--green-dark); font-size: 14px; }
+    .quiet-times > summary { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 8px 11px; border: 1px solid var(--line); background: #fbfdf8; color: var(--green-dark); font-size: 14px; font-weight: 700; cursor: pointer; list-style: none; }
+    .quiet-times > summary::-webkit-details-marker { display: none; }
+    .quiet-times > summary::after { content: "+"; margin-left: auto; font: 20px/1 "Courier New", monospace; }
+    .quiet-times[open] > summary::after { content: "−"; }
+    .quiet-times > summary small { color: var(--muted); font-size: 12px; font-weight: 400; }
+    .quiet-times > summary:focus-visible { outline: 3px solid #81b7a8; outline-offset: 3px; }
+    .quiet-times-content { padding: 12px 2px 0; }
     .quiet-grid { display: grid; gap: 6px; margin-top: 11px; }
     .quiet-row { display: grid; grid-template-columns: 80px minmax(0,1fr); align-items: start; gap: 8px; font-size: 12px; }
     .quiet-row > strong { padding-top: 12px; }
@@ -437,7 +443,7 @@
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
     }
   </style>
-  <link rel="stylesheet" href="garden-motion.css">
+  <link rel="stylesheet" href="garden-motion.css?v=20261116-climb">
 </head>
 <body>
   <header class="topbar">
@@ -471,6 +477,7 @@
       quietTimes: weekDays.map(()=>[]),
       quietDrafts: Array(8).fill(""),
       quietErrors: Array(8).fill(""),
+      quietOpen: false,
       sharedLearningAvailable: false,
       downtimeMinutes: 30,
       downtime: [],
@@ -677,7 +684,8 @@
     }
     function quietInputsMarkup() {
       const labels=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday','Whole week'];
-      return `<section class="quiet-times" aria-labelledby="quiet-heading"><h3 id="quiet-heading">Set times to leave open</h3><p class="helper">Tell us when to keep your calendar free. Add multiple windows, like “before 8 am and 6–8 pm”, or say “all day”. The whole-week rule adds to every day’s times.</p><div class="quiet-grid">${labels.map((day,i)=>`<label class="quiet-row ${i===7?'weekly':''}" for="quiet-${i}"><strong>${day}</strong><span><input id="quiet-${i}" type="text" data-quiet-input="${i}" value="${escapeHtml(state.quietDrafts[i])}" placeholder="${i===7?'e.g. Before 8 am and after 9 pm':'e.g. 12–1 pm; 6–8 pm'}" aria-describedby="quiet-feedback-${i}" aria-invalid="${!!state.quietErrors[i]}"><small id="quiet-feedback-${i}" class="quiet-feedback ${state.quietErrors[i]?'error':''}" aria-live="polite">${escapeHtml(quietFeedback(i))}</small></span></label>`).join('')}</div></section>`;
+      const active=state.quietDrafts.filter(value=>value.trim()).length;
+      return `<details class="quiet-times" ${state.quietOpen?'open':''}><summary id="quiet-heading"><span>Set times to leave open</span><small>${active?`${active} ${active===1?'rule':'rules'} set`:'Optional'}</small></summary><div class="quiet-times-content"><p class="helper">Tell us when to keep your calendar free. Add multiple windows, like “before 8 am and 6–8 pm”, or say “all day”. The whole-week rule adds to every day’s times.</p><div class="quiet-grid">${labels.map((day,i)=>`<label class="quiet-row ${i===7?'weekly':''}" for="quiet-${i}"><strong>${day}</strong><span><input id="quiet-${i}" type="text" data-quiet-input="${i}" value="${escapeHtml(state.quietDrafts[i])}" placeholder="${i===7?'e.g. Before 8 am and after 9 pm':'e.g. 12–1 pm'}" aria-describedby="quiet-feedback-${i}" aria-invalid="${!!state.quietErrors[i]}"><small id="quiet-feedback-${i}" class="quiet-feedback ${state.quietErrors[i]?'error':''}" aria-live="polite">${escapeHtml(quietFeedback(i))}</small></span></label>`).join('')}</div></div></details>`;
     }
     function activityMarkup(item,i) {
       const editing=state.editingIndex===i;
@@ -696,6 +704,8 @@
     function renderList() {
       const currentInput=document.getElementById("new-item");
       if(currentInput) state.itemDraft=currentInput.value;
+      const currentQuiet=document.querySelector('.quiet-times');
+      if(currentQuiet) state.quietOpen=currentQuiet.open;
       shell(`<div class="panel-kicker">Sort it out</div><h2>What would you like in this week?</h2>
         <p class="panel-intro">Say what you want to do and how often. Include days, times, or other details if they matter. We’ll work out the schedule.</p>
         <div class="schedule-prefs"><div class="prefs-head"><div><strong>Days to schedule</strong><p class="helper">${state.planDays.length} of 7 days selected for one-time activities.</p></div><button class="text-button" data-action="selectAllDays">Select all</button></div>
@@ -716,6 +726,7 @@
       document.querySelector('[data-edit-item] input')?.addEventListener('input',e=>{state.editingDraft=e.target.value;});
       document.querySelector('[data-edit-item] input')?.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();actions.cancelEditItem();}});
       document.getElementById('downtime-minutes').addEventListener('change',e=>{state.downtimeMinutes=Math.max(0,Math.min(120,Number(e.target.value)||0));e.target.value=state.downtimeMinutes;resetGeneratedSchedule();});
+      document.querySelector('.quiet-times').addEventListener('toggle',e=>{state.quietOpen=e.currentTarget.open;});
       document.querySelectorAll('[data-estimate]').forEach(form=>form.addEventListener('submit',async e=>{
         e.preventDefault();const item=state.items[+form.dataset.estimate],fields=form.elements;
         const changed=Planner.calibrate(item,{type:fields.type.value,durationMinutes:fields.duration.value,travelMinutes:fields.travel.value});
@@ -733,6 +744,8 @@
       }));
       document.querySelectorAll('[data-quiet-input]').forEach(el=>el.addEventListener('input',e=>{
         const index=+e.target.dataset.quietInput;updateQuietTimes(index,e.target.value);
+        const active=state.quietDrafts.filter(value=>value.trim()).length;
+        document.querySelector('.quiet-times > summary small').textContent=active?`${active} ${active===1?'rule':'rules'} set`:'Optional';
         const feedback=document.getElementById('quiet-feedback-'+index);
         feedback.textContent=quietFeedback(index);feedback.classList.toggle('error',!!state.quietErrors[index]);e.target.setAttribute('aria-invalid',String(!!state.quietErrors[index]));
       }));
@@ -756,7 +769,7 @@
     function validateListInputs() {
       if(state.editingIndex!==null){state.page=2;renderList();document.getElementById('edit-item-'+state.editingIndex)?.focus();toast('Save or cancel your activity edit first.');return false;}
       const invalid=state.quietErrors.findIndex(Boolean);
-      if(invalid!==-1){state.page=2;renderList();document.getElementById('quiet-'+invalid)?.focus();toast('Clarify the highlighted time to leave open first.');return false;}
+      if(invalid!==-1){state.page=2;state.quietOpen=true;const quiet=document.querySelector('.quiet-times');if(quiet)quiet.open=true;renderList();document.getElementById('quiet-'+invalid)?.focus();toast('Clarify the highlighted time to leave open first.');return false;}
       return true;
     }
     function renderGoal() {
@@ -984,6 +997,6 @@
     render();
     loadSharedEstimates();
   </script>
-  <script src="garden-motion.js"></script>
+  <script src="garden-motion.js?v=20261116-climb"></script>
 </body>
 </html>
