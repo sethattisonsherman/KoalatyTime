@@ -39,7 +39,7 @@ body { position: relative; }
 .roaming-koala.is-landing .koala-sprite { animation: koala-land .36s steps(1) 1; }
 .roaming-koala.is-waving .koala-sprite { animation: koala-wave 1.15s steps(1) infinite; }
 .roaming-koala.is-sitting .koala-sprite { animation: koala-sit 2.4s ease-in-out infinite; }
-.roaming-koala.is-peeking .koala-sprite { animation: koala-peek 1.7s ease-in-out infinite; clip-path: inset(0 0 27%); }
+.roaming-koala.is-peeking .koala-sprite { animation: koala-peek-frames 1.7s steps(1) infinite, koala-peek-motion 1.7s ease-in-out infinite; clip-path: inset(0 0 27%); }
 .roaming-koala.is-hanging .koala-sprite { animation: koala-hang 2s ease-in-out infinite; transform-origin: 50% 15%; }
 @keyframes cloud-drift { from { translate: -12px 0; } to { translate: 26px 0; } }
 @keyframes fish-drift { from { translate: -9px 1px; } to { translate: 13px -2px; } }
@@ -64,7 +64,8 @@ body { position: relative; }
 @keyframes koala-contact { 0% { opacity: 0; scale: .6; } 35% { opacity: 1; scale: 1; } 100% { opacity: 0; scale: 1.7; } }
 @keyframes koala-wave { 0%,49% { background-position: 33.333% 0%; rotate: -3deg; } 50%,100% { background-position: 100% 0%; rotate: 7deg; } }
 @keyframes koala-sit { 0%,100% { background-position: 0% 100%; translate: 0 2px; } 50% { background-position: 0% 100%; translate: 0 0; } }
-@keyframes koala-peek { 0%,100% { background-position: 0% 100%; translate: 0 9px; } 45%,65% { background-position: 100% 100%; translate: 0 -3px; } }
+@keyframes koala-peek-frames { 0%,44.99%,66%,100% { background-position: 0% 100%; } 45%,65.99% { background-position: 100% 100%; } }
+@keyframes koala-peek-motion { 0%,100% { translate: 0 9px; } 45%,65% { translate: 0 -3px; } }
 @keyframes koala-hang { 0%,100% { background-position: 33.333% 100%; translate: 0 8px; rotate: -6deg; } 50% { background-position: 33.333% 100%; translate: 0 13px; rotate: 5deg; } }
 @media (max-width: 700px) {
   .roaming-koala { width: 36px; height: 36px; }
