@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 18669)
-Total output lines: 825
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -491,7 +488,37 @@ Total output lines: 825
       try {
         const plans=await GoogleCalendar.readWeek(weekStart,selected);
         const previous=new Map(state.imported.filter(x=>x.source==='google').map(x=>[x.googleId,x]));
-        state.imported=state.imported.filter…669 tokens truncated…n-day-details" name="plan-days" data-day="${dayIndex}" ${state.openPlanDay===dayIndex?'open':''}><summary>${day} · ${dates[dayIndex]}<span>${plans.length} plan${plans.length===1?'':'s'}</span></summary><div class="plan-day-plans">${plans.map(({plan,i})=>`<article class="plan-agenda-row ${plan.keep?'':'excluded'}" id="plan-row-${i}" tabindex="-1"><strong>${escapeHtml(plan.title)}</strong><small>${plan.allDay?'All day':formatClock(plan.time)+' · '+plan.durationMinutes+' min'} · ${plan.source==='google'?'Google Calendar':'Added by you'}${plan.tentative?' · Tentative':''}${!plan.keep?' · Excluded':''}</small><div class="plan-agenda-actions"><button class="text-button" data-action="togglePlanKeep" data-id="${i}">${plan.keep?'Exclude':'Restore'}</button><button class="text-button" data-action="planTentative" data-id="${i}">${plan.tentative?'Mark confirmed':'Mark tentative'}</button></div></article>`).join('')||'<p class="helper">No plans for this day.</p>'}</div></details>`;
+        state.imported=state.imported.filter(x=>x.source!=='google'||!selected.includes(x.day));
+        state.imported.push(...plans.map(plan=>{const old=previous.get(plan.googleId);return old?{...plan,keep:old.keep,tentative:old.tentative}:plan;}));
+        state.scanned=true;state.googleMessage=`Checked ${selected.length} days. Found ${plans.length} plan${plans.length===1?'':'s'}.`;
+      } catch(error){state.googleError=true;state.googleMessage=error.message;}
+      state.scanBusy=false;renderPlans();
+    }
+    function renderPlans() {
+      shell(`<div class="panel-kicker">Plans already in the week</div><h2>Anything else already planned?</h2>
+        <p class="panel-intro">Check your calendar for existing plans, then review your week below.</p>
+        <div class="source-scan"><strong>Which days should we check?</strong><p class="helper" style="margin:2px 0 0">${weekLabel} · choose a few days or the full week.</p>
+          ${googleConnectionMarkup()}
+          <button class="button small secondary" style="margin-top:8px" data-action="selectAllPlanDays">Select all days</button>
+          <div class="day-checks">${weekDays.map((d,i)=>`<button class="day-pill ${state.scans.includes(i)?'checked':''}" data-action="day" data-id="${i}" aria-pressed="${state.scans.includes(i)}" ${state.scanBusy?'disabled':''}>${d} ${dates[i].split(' ')[1]}</button>`).join('')}</div>
+          <div class="scan-action"><button class="button small" data-action="scan" ${state.scanBusy?'disabled':''}>${state.scanBusy?'Checking…':state.scanned?'Check again':'Check selected days'}</button></div>
+        </div>
+        <div class="plan-section"><h3>Review Plans</h3><p class="helper">${weekLabel} · ${escapeHtml(Intl.DateTimeFormat().resolvedOptions().timeZone)}</p>
+          ${planCalendarMarkup()}
+          <p class="helper">Select a calendar block or expand a day below to review its plans.</p>
+          ${planAgendaMarkup()}
+        </div>${navButtons('back','toList')}`,1);
+      document.querySelectorAll('.plan-day-details').forEach(group=>group.addEventListener('toggle',()=>{
+        const day=+group.dataset.day;
+        if(group.open)state.openPlanDay=day;
+        else if(state.openPlanDay===day)state.openPlanDay=null;
+      }));
+    }
+    function planAgendaMarkup() {
+      const fullDays=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      return `<div class="plan-agenda" aria-label="Plans by day">${fullDays.map((day,dayIndex)=>{
+        const plans=state.imported.map((plan,i)=>({plan,i})).filter(({plan})=>plan.day===dayIndex).sort((a,b)=>Number(!!b.plan.allDay)-Number(!!a.plan.allDay)||a.plan.time.localeCompare(b.plan.time));
+        return `<details class="plan-day-details" name="plan-days" data-day="${dayIndex}" ${state.openPlanDay===dayIndex?'open':''}><summary>${day} · ${dates[dayIndex]}<span>${plans.length} plan${plans.length===1?'':'s'}</span></summary><div class="plan-day-plans">${plans.map(({plan,i})=>`<article class="plan-agenda-row ${plan.keep?'':'excluded'}" id="plan-row-${i}" tabindex="-1"><strong>${escapeHtml(plan.title)}</strong><small>${plan.allDay?'All day':formatClock(plan.time)+' · '+plan.durationMinutes+' min'} · ${plan.source==='google'?'Google Calendar':'Added by you'}${plan.tentative?' · Tentative':''}${!plan.keep?' · Excluded':''}</small><div class="plan-agenda-actions"><button class="text-button" data-action="togglePlanKeep" data-id="${i}">${plan.keep?'Exclude':'Restore'}</button><button class="text-button" data-action="planTentative" data-id="${i}">${plan.tentative?'Mark confirmed':'Mark tentative'}</button></div></article>`).join('')||'<p class="helper">No plans for this day.</p>'}</div></details>`;
       }).join('')}</div>`;
     }
     function planCalendarMarkup() {
@@ -795,4 +822,3 @@ Total output lines: 825
   </script>
 </body>
 </html>
-
